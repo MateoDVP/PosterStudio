@@ -1,4 +1,4 @@
-# PosterStudio 🎨 Engine de Pre-prensa Digital & Pósters Musicales (300 DPI)
+# PosterStudio Engine de Pre-prensa Digital & Pósters Musicales (300 DPI)
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
