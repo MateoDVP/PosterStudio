@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0d0e12;
+  --foreground: #ededed;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Print styles for direct browser print dialog */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide all UI except poster */
+  header,
+  aside,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  #poster-canvas {
+    box-shadow: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
