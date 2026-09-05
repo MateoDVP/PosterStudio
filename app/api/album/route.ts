@@ -3,9 +3,6 @@ import {
   parseSpotifyUrl,
   getSpotifyAccessToken,
   fetchViaSpotifyApi,
-  fetchViaSpotifyEmbed,
-  fetchViaSpotifyOEmbed,
-  formatDuration,
   ExtractedMusicData,
 } from '@/lib/spotify';
 import { fetchITunesHighResArtwork, fetchITunesByUpc, fetchITunesByIsrc } from '@/lib/itunes';
@@ -33,33 +30,34 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    let extracted: ExtractedMusicData | null = null;
-
-    // 1. Try Spotify Web API if credentials configured
+    // 1. Authenticate with official Spotify Web API
     const token = await getSpotifyAccessToken();
-    if (token) {
-      extracted = await fetchViaSpotifyApi(token, parsed.type as 'album' | 'track', parsed.id);
+    if (!token) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'Credenciales de Spotify no configuradas o inválidas. Configura SPOTIFY_CLIENT_ID y SPOTIFY_CLIENT_SECRET en tu archivo .env.local para consultar la API oficial.',
+        },
+        { status: 401 }
+      );
     }
 
-    // 2. Fallback to Spotify Embed scraper (complete tracklist, artist & 640px cover without API keys)
-    if (!extracted && (parsed.type === 'album' || parsed.type === 'track')) {
-      extracted = await fetchViaSpotifyEmbed(parsed.type, parsed.id);
-    }
-
-    // 3. Fallback to oEmbed if embed scraper failed
-    if (!extracted) {
-      extracted = await fetchViaSpotifyOEmbed(inputUrl, parsed.type as 'album' | 'track', parsed.id);
-    }
-
+    // 2. Fetch official data from Spotify Web API
+    const extracted: ExtractedMusicData | null = await fetchViaSpotifyApi(
+      token,
+      parsed.type as 'album' | 'track',
+      parsed.id
+    );
 
     if (!extracted) {
       return NextResponse.json(
-        { success: false, error: 'Could not extract music data from Spotify' },
+        { success: false, error: 'No se encontró el álbum o canción en la API oficial de Spotify.' },
         { status: 404 }
       );
     }
 
-    // 3. Exact High-Resolution Cover Matching
+    // 3. Exact High-Resolution Cover Matching for dual selector (Apple Music 3000px vs Spotify 640px)
     const originalSpotifyCover = extracted.coverUrl;
     extracted.spotifyCoverUrl = originalSpotifyCover;
 
@@ -70,7 +68,6 @@ export async function GET(req: NextRequest) {
       highResCover = await fetchITunesByIsrc(extracted.isrc);
     }
 
-    // Priority 2: Verified Title + Artist lookup if barcode wasn't available
     if (!highResCover) {
       highResCover = await fetchITunesHighResArtwork(
         extracted.artist,
@@ -82,61 +79,9 @@ export async function GET(req: NextRequest) {
     if (highResCover) {
       extracted.itunesCoverUrl = highResCover;
       extracted.highResCoverUrl = highResCover;
-      extracted.coverUrl = highResCover; // Default to 3000px Apple Master
+      extracted.coverUrl = highResCover; // Default to 3000px Apple Master for printing
     } else {
       extracted.coverUrl = originalSpotifyCover;
-    }
-
-
-
-    // 4. If album and tracklist has only 1 track (common with oEmbed fallback),
-    // try enriching tracklist via iTunes Search API!
-    if (extracted.type === 'album' && extracted.tracks.length <= 1) {
-      try {
-        const itunesSearch = await fetch(
-          `https://itunes.apple.com/search?term=${encodeURIComponent(
-            `${extracted.artist} ${extracted.title}`
-          )}&entity=song&limit=40`
-        );
-        if (itunesSearch.ok) {
-          const itData = await itunesSearch.json();
-          if (itData.results && itData.results.length > 0) {
-            // Filter songs belonging to the target album
-            const targetAlbumLower = extracted.title.toLowerCase();
-            const matchingTracks = itData.results.filter(
-              (item: any) =>
-                item.wrapperType === 'track' &&
-                item.collectionName &&
-                (item.collectionName.toLowerCase().includes(targetAlbumLower) ||
-                  targetAlbumLower.includes(item.collectionName.toLowerCase()))
-            );
-
-            const tracksToUse = matchingTracks.length > 0 ? matchingTracks : itData.results.filter((i: any) => i.wrapperType === 'track');
-
-            if (tracksToUse.length > 0) {
-              // Sort by trackNumber
-              tracksToUse.sort((a: any, b: any) => (a.trackNumber || 0) - (b.trackNumber || 0));
-              extracted.tracks = tracksToUse.map((t: any, idx: number) => ({
-                id: t.trackId ? String(t.trackId) : `itunes-${idx + 1}`,
-                number: t.trackNumber || idx + 1,
-                title: t.trackName || `Track ${idx + 1}`,
-                duration: t.trackTimeMillis ? formatDuration(t.trackTimeMillis) : undefined,
-              }));
-
-              // Also get release year if missing
-              if (tracksToUse[0]?.releaseDate) {
-                const dateStr = tracksToUse[0].releaseDate.substring(0, 10);
-                const parts = dateStr.split('-');
-                if (parts.length === 3) {
-                  extracted.releaseDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                }
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('iTunes tracklist enrichment error:', err);
-      }
     }
 
     return NextResponse.json({
