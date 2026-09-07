@@ -2,6 +2,7 @@
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Chakra UI](https://img.shields.io/badge/Chakra_UI-v3.37-teal?style=flat-square&logo=chakraui)](https://chakra-ui.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![Spotify API](https://img.shields.io/badge/Spotify_API-Official-1DB954?style=flat-square&logo=spotify)](https://developer.spotify.com/)
 [![Apple Music](https://img.shields.io/badge/Apple_Music-iTunes_API_3000px-FC3C44?style=flat-square&logo=apple-music)](https://developer.apple.com/)
@@ -18,7 +19,9 @@ Conecta en tiempo real la **API Oficial de Spotify** para metadatos y la **API d
 ### 💻 Frontend & Arquitectura
 - **Framework:** Next.js 14 (App Router con Server Components y API Route Handlers).
 - **Lenguaje:** TypeScript 5 (tipado estricto de extremo a extremo en modelos musicales y configuraciones de impresión).
+- **Diseño del Sistema & UI:** **Chakra UI v3** integrado con `@emotion/react` para el panel inspector de diseño.
 - **Estilos & UI:** Tailwind CSS con variables dinámicas, animaciones CSS personalizadas y Lucide Icons.
+- **Inspector Estilo Figma:** Sistema de árbol / acordeón (`SidebarInspector`) con secciones colapsables independientes (*Formato & Medidas*, *Fondo & Atmósfera*, *Carátula & Arte*, *Tipografía & Textos*, *Pistas & Tracklist*, *Reproductor & Código Spotify*).
 - **Componentes Avanzados:** `ColorPickerPopover` con **React Portals (`createPortal`)** y algoritmo de detección de límites de ventana (*boundary clamping*) para interfaces fluidas sin recortes de *overflow*.
 
 ### 🔌 APIs Oficiales & Microservicios
@@ -87,10 +90,9 @@ PosterStudio/
 │   │       ├── AlbumGalleryTemplate.tsx   # Plantilla 1: Galería estilo suizo minimalista
 │   │       └── SongPlayerTemplate.tsx     # Plantilla 2: Placa interactiva de canción
 │   ├── controls/
-│   │   ├── LayoutControls.tsx       # Formato de papel, fondo #HEX y difuminado ambiental
-│   │   ├── AlbumControls.tsx        # Selector dual de portada, tracks y colores tipográficos
-│   │   └── PlayerControls.tsx       # Controles de reproducción, timeline y subida de foto
+│   │   └── SidebarInspector.tsx     # Inspector Figma-style colapsable con Chakra UI v3
 │   └── ui/
+│       ├── provider.tsx             # Chakra UI Root Provider para Next.js App Router
 │       ├── ColorPickerPopover.tsx   # Selector de color flotante con React Portal
 │       └── UrlInputBar.tsx          # Barra de extracción bajo demanda
 ├── lib/

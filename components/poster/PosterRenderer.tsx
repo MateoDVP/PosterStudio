@@ -31,7 +31,7 @@ export const PosterRenderer = forwardRef<HTMLDivElement, PosterRendererProps>(
 
     return (
       <div className="w-full flex flex-col items-center justify-center p-2 sm:p-4 my-auto">
-        {/* Prepress dimension ruler banner (top) */}
+        {/* Regla de dimensiones pre-prensa (superior) */}
         <div
           data-export-ignore="true"
           className="flex flex-wrap items-center justify-center gap-2 mb-3 text-[11px] font-mono select-none"
@@ -51,7 +51,7 @@ export const PosterRenderer = forwardRef<HTMLDivElement, PosterRendererProps>(
           </span>
         </div>
 
-        {/* Main printable canvas container with exact mathematical aspect ratio */}
+        {/* Contenedor principal imprimible con relación de aspecto matemática exacta */}
         <div
           ref={ref}
           id="poster-canvas"
@@ -64,7 +64,7 @@ export const PosterRenderer = forwardRef<HTMLDivElement, PosterRendererProps>(
             maxHeight: 'calc(100vh - 165px)',
           }}
         >
-          {/* Prepress Safe Margins & Bleed Guides (3mm simulation, ignored in export) */}
+          {/* Guías de margen seguro y sangrado de pre-prensa (simulación de 3mm, se ignora al exportar) */}
           {showGuides && (
             <div
               data-export-ignore="true"
@@ -82,7 +82,7 @@ export const PosterRenderer = forwardRef<HTMLDivElement, PosterRendererProps>(
             </div>
           )}
 
-          {/* Empty State View */}
+          {/* Vista cuando el póster está vacío (Estado inicial) */}
           {isEmpty ? (
             <div className="w-full h-full p-[8%] flex flex-col items-center justify-center text-center select-none box-border">
               <div className="w-full aspect-square border-2 border-dashed border-neutral-300 rounded-2xl flex flex-col items-center justify-center p-6 bg-neutral-50/70">
@@ -115,7 +115,7 @@ export const PosterRenderer = forwardRef<HTMLDivElement, PosterRendererProps>(
               </div>
             </div>
           ) : (
-            /* Active Template Render */
+            /* Renderizado de la plantilla activa */
             config.template === 'album-gallery' ? (
               <AlbumGalleryTemplate
                 album={config.album}
