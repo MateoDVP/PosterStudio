@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import './globals.css';
+import { Provider } from '@/components/ui/provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -26,9 +27,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} ${poppins.variable}`}>
+    <html lang="es" suppressHydrationWarning className={`${inter.variable} ${poppins.variable}`}>
       <body className="antialiased min-h-screen bg-[#0a0a0c] text-neutral-100 flex flex-col">
-        {children}
+        <Provider>{children}</Provider>
       </body>
     </html>
   );
