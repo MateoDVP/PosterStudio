@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { PlayerData, PrintSize } from '@/types/poster';
+import { SpotifyCode } from '../SpotifyCode';
 import { Heart, Shuffle, SkipBack, Play, SkipForward, Repeat } from 'lucide-react';
 
 interface SongPlayerTemplateProps {
@@ -34,11 +35,6 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
     return `/api/image-proxy?url=${encodeURIComponent(url)}`;
   };
 
-  const codeColorParam = player.soundwaveColor ? player.soundwaveColor.replace('#', '') : '000000';
-  const scannableCodeUrl = `/api/spotify-code?uri=${encodeURIComponent(
-    player.spotifyUri || 'spotify:track:4cOdK2wGLETKBW3PvgPWqT'
-  )}&bgColor=transparent&codeColor=${codeColorParam}&size=1280`;
-
   const isSquarerFormat = printSize.aspectRatioRatio >= 0.74;
   const titleColor = player.titleColor || textColor || '#0a0a0a';
   const artistColor = player.artistColor || textColor || '#737373';
@@ -52,12 +48,12 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
         padding: isSquarerFormat ? '6% 7%' : '8%',
       }}
     >
-      {/* Ambient Blurred Background Cover Layer */}
+      {/* Capa de fondo con portada desenfocada ambiental */}
       {enableBlurredBackground && player.coverUrl && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
           <img
             src={getSafeImageUrl(player.coverUrl)}
-            alt="Blurred Player Backdrop"
+            alt="Fondo desenfocado del reproductor"
             crossOrigin="anonymous"
             className="w-full h-full object-cover scale-125"
             style={{
@@ -81,7 +77,7 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
         </div>
       )}
 
-      {/* 1. PHOTO / ARTWORK (Upper half) */}
+      {/* 1. FOTO / CARÁTULA CUADRADA (Mitad superior) */}
       <div
         className="w-full aspect-square relative z-10 flex-shrink-0 bg-neutral-100 shadow-md overflow-hidden"
         style={{
@@ -104,21 +100,20 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
         )}
       </div>
 
-      {/* 2. SPOTIFY SCANNABLE CODE (Centered) */}
+      {/* 2. CÓDIGO SCANNABLE DE SPOTIFY (Centrado) */}
       <div
         className={`w-full flex justify-center items-center overflow-hidden relative z-10 ${
           isSquarerFormat ? 'my-2.5 h-8' : 'my-3.5 sm:my-4 h-9 sm:h-10'
         }`}
       >
-        <img
-          src={scannableCodeUrl}
-          alt="Spotify Scannable Code"
-          crossOrigin="anonymous"
-          className="h-full w-auto max-w-[100%] object-contain block"
+        <SpotifyCode
+          uri={player.spotifyUri || 'spotify:track:4cOdK2wGLETKBW3PvgPWqT'}
+          color={player.soundwaveColor || textColor || '#000000'}
+          className="h-full w-auto"
         />
       </div>
 
-      {/* 3. SONG TITLE & ARTIST + LIKE HEART */}
+      {/* 3. TÍTULO DE LA CANCIÓN, ARTISTA Y CORAZÓN DE FAVORITO */}
       <div className="w-full flex items-center justify-between gap-4 relative z-10">
         <div className="min-w-0 flex-1">
           <h2
@@ -145,11 +140,11 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
         </div>
       </div>
 
-      {/* 4. PROGRESS TIMELINE WITH KNOB */}
+      {/* 4. LÍNEA DE PROGRESO Y TIEMPO */}
       <div className={`w-full relative z-10 ${isSquarerFormat ? 'my-2' : 'my-2.5 sm:my-3'}`}>
-        {/* Track Line */}
+        {/* Barra de progreso */}
         <div className="relative w-full h-[3px] bg-neutral-200 rounded-full flex items-center">
-          {/* Played progress */}
+          {/* Progreso reproducido */}
           <div
             className="h-full rounded-full"
             style={{
@@ -157,7 +152,7 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
               backgroundColor: titleColor,
             }}
           />
-          {/* Scrubber Knob */}
+          {/* Indicador / Perilla circular */}
           <div
             className="absolute w-2.5 h-2.5 rounded-full shadow-sm -ml-1"
             style={{
@@ -167,7 +162,7 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
           />
         </div>
 
-        {/* Timestamp indicators */}
+        {/* Indicadores de tiempo transcurrido y total */}
         <div
           className="flex justify-between items-center text-[9px] sm:text-[10px] font-medium mt-1 tabular-nums"
           style={{ color: artistColor }}
@@ -177,7 +172,7 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
         </div>
       </div>
 
-      {/* 5. PLAYER CONTROLS (Shuffle, Prev, Play/Pause circle, Next, Repeat) */}
+      {/* 5. CONTROLES DEL REPRODUCTOR (Aleatorio, Anterior, Play circular, Siguiente, Repetir) */}
       <div className="w-full flex items-center justify-between px-2 pt-0.5 pb-1 relative z-10" style={{ color: titleColor }}>
         <button type="button" className="opacity-80 hover:opacity-100 transition-opacity">
           <Shuffle className="w-3.5 sm:w-4 h-3.5 sm:h-4 stroke-[2.2]" />
@@ -187,7 +182,7 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
           <SkipBack className="w-4 sm:w-5 h-4 sm:h-5 fill-current" />
         </button>
 
-        {/* Circular Play Button */}
+        {/* Botón Circular de Play */}
         <button
           type="button"
           className={`${

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+const rawSvgCache = new Map<string, string>();
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const uri = searchParams.get('uri') || 'spotify:album:3RQQmkQEvNCY4prGKE6oc5';
@@ -12,19 +14,27 @@ export async function GET(req: NextRequest) {
   const targetHex = codeColor.length === 6 ? `#${codeColor}` : `#${codeColor.padEnd(6, '0')}`;
 
   try {
-    // 1. Fetch the 100% AUTHENTIC, SCANNABLE official SVG from Spotify in black & white
-    // Spotify scannables API strictly requires "white" and "black" to generate valid scannable bars.
-    const spotifySvgUrl = `https://scannables.scdn.co/uri/plain/svg/ffffff/black/640/${encodeURIComponent(uri)}`;
+    let rawSvg = rawSvgCache.get(uri);
 
-    const response = await fetch(spotifySvgUrl, {
-      headers: {
-        'User-Agent': 'PosterStudio/1.0',
-      },
-      next: { revalidate: 86400 },
-    });
+    if (!rawSvg) {
+      // Fetch the 100% AUTHENTIC, SCANNABLE official SVG from Spotify in black & white
+      const spotifySvgUrl = `https://scannables.scdn.co/uri/plain/svg/ffffff/black/640/${encodeURIComponent(uri)}`;
 
-    if (response.ok) {
-      let svg = await response.text();
+      const response = await fetch(spotifySvgUrl, {
+        headers: {
+          'User-Agent': 'PosterStudio/1.0',
+        },
+        next: { revalidate: 86400 },
+      });
+
+      if (response.ok) {
+        rawSvg = await response.text();
+        rawSvgCache.set(uri, rawSvg);
+      }
+    }
+
+    if (rawSvg) {
+      let svg = rawSvg;
 
       // 2. Handle background color FIRST before recoloring elements
       if (bgColor === 'transparent') {
