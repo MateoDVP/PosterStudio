@@ -4,9 +4,7 @@ import React, { useState, useRef } from 'react';
 import { PosterConfig } from '@/types/poster';
 import { PRINT_SIZES, DEFAULT_PRINT_SIZE } from '@/lib/constants/printSizes';
 import { PosterRenderer } from '@/components/poster/PosterRenderer';
-import { LayoutControls } from '@/components/controls/LayoutControls';
-import { AlbumControls } from '@/components/controls/AlbumControls';
-import { PlayerControls } from '@/components/controls/PlayerControls';
+import { SidebarInspector } from '@/components/controls/SidebarInspector';
 import { UrlInputBar } from '@/components/ui/UrlInputBar';
 import { exportToPng } from '@/lib/export/exportToPng';
 import { exportToPdf } from '@/lib/export/exportToPdf';
@@ -14,8 +12,6 @@ import {
   Download,
   FileText,
   Printer,
-  Layers,
-  Edit3,
   CheckCircle2,
   AlertCircle,
   Loader2,
@@ -60,7 +56,6 @@ const INITIAL_POSTER_CONFIG: PosterConfig = {
 
 export default function PosterStudioPage() {
   const [config, setConfig] = useState<PosterConfig>(INITIAL_POSTER_CONFIG);
-  const [activeTab, setActiveTab] = useState<'content' | 'layout'>('content');
   const [showGuides, setShowGuides] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
@@ -262,54 +257,14 @@ export default function PosterStudioPage() {
           </div>
         </main>
 
-        {/* RIGHT COLUMN: Fixed Inspector / Controls Menu */}
-        <aside className="w-80 sm:w-96 lg:w-[410px] bg-[#12141a] border-l border-neutral-800/80 flex flex-col flex-shrink-0 h-full overflow-hidden z-20 shadow-xl">
-          {/* Tabs fixed at top of the sidebar */}
-          <div className="flex border-b border-neutral-800/80 px-6 pt-3 flex-shrink-0 bg-[#12141a]">
-            <button
-              type="button"
-              onClick={() => setActiveTab('content')}
-              className={`pb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 mr-6 ${
-                activeTab === 'content'
-                  ? 'border-emerald-500 text-emerald-400'
-                  : 'border-transparent text-neutral-400 hover:text-neutral-200'
-              }`}
-            >
-              <Edit3 className="w-4 h-4" />
-              Contenido & Textos
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('layout')}
-              className={`pb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 ${
-                activeTab === 'layout'
-                  ? 'border-emerald-500 text-emerald-400'
-                  : 'border-transparent text-neutral-400 hover:text-neutral-200'
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              Plantilla & Formato
-            </button>
-          </div>
-
-          {/* Controls Form Area - Scrollable internally */}
-          <div className="p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
-            {activeTab === 'content' ? (
-              config.template === 'album-gallery' ? (
-                <AlbumControls config={config} onChange={setConfig} />
-              ) : (
-                <PlayerControls config={config} onChange={setConfig} />
-              )
-            ) : (
-              <LayoutControls
-                config={config}
-                onChange={setConfig}
-                showGuides={showGuides}
-                onToggleGuides={() => setShowGuides(!showGuides)}
-              />
-            )}
-          </div>
+        {/* RIGHT COLUMN: Figma-Style Inspector Menu */}
+        <aside className="w-80 sm:w-96 lg:w-[420px] bg-[#12141a] border-l border-neutral-800/80 flex flex-col flex-shrink-0 h-full overflow-hidden z-20 shadow-xl">
+          <SidebarInspector
+            config={config}
+            onChange={setConfig}
+            showGuides={showGuides}
+            onToggleGuides={() => setShowGuides(!showGuides)}
+          />
         </aside>
       </div>
 
