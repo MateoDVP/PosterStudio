@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { PosterConfig } from '@/types/poster';
 import { PRINT_SIZES, DEFAULT_PRINT_SIZE } from '@/lib/constants/printSizes';
 import { PosterRenderer } from '@/components/poster/PosterRenderer';
@@ -8,6 +8,9 @@ import { SidebarInspector } from '@/components/controls/SidebarInspector';
 import { UrlInputBar } from '@/components/ui/UrlInputBar';
 import { exportToPng } from '@/lib/export/exportToPng';
 import { exportToPdf } from '@/lib/export/exportToPdf';
+import { exportToSvg } from '@/lib/export/exportToSvg';
+import { extractPaletteFromImage, DEFAULT_PALETTE } from '@/lib/colorPalette';
+import { formatReleaseDate, calculateTotalDurationFromTracks } from '@/lib/spotify';
 import {
   Download,
   FileText,
@@ -15,6 +18,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  PenTool,
 } from 'lucide-react';
 
 const INITIAL_POSTER_CONFIG: PosterConfig = {
@@ -31,6 +35,7 @@ const INITIAL_POSTER_CONFIG: PosterConfig = {
     title: '',
     artist: '',
     releaseDate: '',
+    totalDuration: '',
     coverUrl: '',
     spotifyUri: '',
     soundwaveColor: '#000000',
@@ -38,6 +43,8 @@ const INITIAL_POSTER_CONFIG: PosterConfig = {
     trackColumns: 2,
     uppercaseTitle: true,
     tracks: [],
+    palette: DEFAULT_PALETTE,
+    showPalette: true,
   },
   player: {
     title: '',
@@ -64,6 +71,41 @@ export default function PosterStudioPage() {
   const posterRef = useRef<HTMLDivElement>(null);
   const activePrintSize = PRINT_SIZES[config.sizeKey];
 
+  // Extraer paleta de 5 colores automáticamente cuando cambia la portada
+  useEffect(() => {
+    const activeCover =
+      config.template === 'album-gallery'
+        ? config.album.coverUrl
+        : config.player.coverUrl || config.album.coverUrl;
+
+    if (!activeCover) return;
+
+    let isCurrent = true;
+    extractPaletteFromImage(activeCover, 5).then((palette) => {
+      if (!isCurrent || !palette || palette.length === 0) return;
+      setConfig((prev) => {
+        if (
+          prev.album.palette &&
+          prev.album.palette.length === palette.length &&
+          prev.album.palette.every((c, i) => c === palette[i])
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          album: {
+            ...prev.album,
+            palette,
+          },
+        };
+      });
+    });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [config.album.coverUrl, config.player.coverUrl, config.template]);
+
   const handleDataExtracted = (data: any, type: 'album' | 'track') => {
     if (type === 'album') {
       setConfig((prev) => {
@@ -75,7 +117,8 @@ export default function PosterStudioPage() {
             ...prev.album,
             title: data.title || prev.album.title,
             artist: data.artist || prev.album.artist,
-            releaseDate: data.releaseDate || prev.album.releaseDate,
+            releaseDate: formatReleaseDate(data.releaseDate || prev.album.releaseDate),
+            totalDuration: data.totalDuration || calculateTotalDurationFromTracks(data.tracks || prev.album.tracks) || prev.album.totalDuration,
             coverUrl: defaultCover,
             spotifyCoverUrl: data.spotifyCoverUrl || data.coverUrl,
             itunesCoverUrl: data.itunesCoverUrl,
@@ -134,17 +177,36 @@ export default function PosterStudioPage() {
     }
   };
 
-  const handleExportPdf = async () => {
-    if (!posterRef.current) return;
+  const handleExportSvg = async () => {
     setExporting(true);
     try {
-      await exportToPdf(
-        posterRef.current,
+      await exportToSvg(
+        config,
         activePrintSize,
         `poster-${config.template}`,
         (status) => setExportStatus(status)
       );
-      showNotification('PDF de preprensa generado en milímetros', 'success');
+      showNotification('Póster SVG vectorial editable para Illustrator descargado', 'success');
+    } catch (err: any) {
+      console.error(err);
+      showNotification(err.message || 'Error al exportar SVG', 'error');
+    } finally {
+      setExporting(false);
+      setExportStatus(null);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExporting(true);
+    try {
+      await exportToPdf(
+        config,
+        activePrintSize,
+        `poster-${config.template}`,
+        (status) => setExportStatus(status),
+        posterRef.current
+      );
+      showNotification('PDF vectorial con trazados generado con éxito', 'success');
     } catch (err: any) {
       console.error(err);
       showNotification(err.message || 'Error al exportar PDF', 'error');
@@ -201,17 +263,33 @@ export default function PosterStudioPage() {
 
           <button
             type="button"
+            onClick={handleExportSvg}
+            disabled={exporting}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 text-xs font-semibold border border-amber-500/30 hover:border-amber-500/50 transition-all disabled:opacity-50"
+            title="Descargar archivo SVG vectorial editable con capas y textos para Adobe Illustrator"
+          >
+            {exporting && exportStatus?.includes('SVG') ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <PenTool className="w-3.5 h-3.5 text-amber-400" />
+            )}
+            <span className="hidden sm:inline">SVG (Illustrator)</span>
+            <span className="sm:hidden">SVG</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleExportPdf}
             disabled={exporting}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 text-xs font-bold shadow-md shadow-emerald-500/25 transition-all disabled:opacity-50"
-            title="Generar PDF a escala milimétrica para imprenta"
+            title="Generar PDF vectorial con trazados a escala milimétrica para imprenta"
           >
             {exporting && exportStatus?.includes('PDF') ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
               <FileText className="w-3.5 h-3.5" />
             )}
-            <span className="hidden sm:inline">PDF Imprenta (mm)</span>
+            <span className="hidden sm:inline">PDF Vectorial (mm)</span>
             <span className="sm:hidden">PDF</span>
           </button>
 
@@ -234,27 +312,11 @@ export default function PosterStudioPage() {
         </div>
       )}
 
-      {/* 2. MAIN APP BODY: Scrollable Poster Canvas (Left) + Fixed Menu (Right) */}
+      {/* 2. MAIN APP BODY: Maximized Poster Canvas (Left/Center) + Fixed Menu (Right) */}
       <div className="flex-1 flex overflow-hidden">
-        {/* LEFT / CENTER COLUMN: Scrollable poster canvas */}
-        <main className="flex-1 h-full overflow-y-auto flex flex-col items-center justify-start p-4 sm:p-8 bg-neutral-950/70 relative">
-          {/* Format specifications indicator */}
-          <div className="sticky top-0 z-10 mb-4 px-4 py-1.5 rounded-full bg-neutral-900/80 backdrop-blur border border-neutral-800 flex flex-wrap items-center justify-center gap-2.5 text-xs text-neutral-400 shadow-sm">
-            <span className="font-semibold text-neutral-200">{activePrintSize.name}</span>
-            <span>•</span>
-            <span className="font-mono">
-              {activePrintSize.widthMm} × {activePrintSize.heightMm} mm
-            </span>
-            <span>•</span>
-            <span className="font-mono text-emerald-400">
-              {activePrintSize.widthPx300Dpi} × {activePrintSize.heightPx300Dpi} px @ 300 DPI
-            </span>
-          </div>
-
-          {/* Printable Poster Canvas */}
-          <div className="w-full flex-1 flex items-center justify-center">
-            <PosterRenderer ref={posterRef} config={config} showGuides={showGuides} />
-          </div>
+        {/* LEFT / CENTER COLUMN: Maximized poster canvas viewport */}
+        <main className="flex-1 h-full overflow-hidden flex items-center justify-center p-2 sm:p-4 bg-neutral-950/80 relative">
+          <PosterRenderer ref={posterRef} config={config} showGuides={showGuides} />
         </main>
 
         {/* RIGHT COLUMN: Figma-Style Inspector Menu */}

@@ -30,27 +30,7 @@ export const PosterRenderer = forwardRef<HTMLDivElement, PosterRendererProps>(
     const isEmpty = isAlbumEmpty || isPlayerEmpty;
 
     return (
-      <div className="w-full flex flex-col items-center justify-center p-2 sm:p-4 my-auto">
-        {/* Regla de dimensiones pre-prensa (superior) */}
-        <div
-          data-export-ignore="true"
-          className="flex flex-wrap items-center justify-center gap-2 mb-3 text-[11px] font-mono select-none"
-        >
-          <span className="flex items-center gap-1.5 bg-neutral-900/90 border border-neutral-800 px-3 py-1 rounded-full text-neutral-300 shadow-sm">
-            <span className="text-emerald-400 font-bold">Ancho:</span> {printSize.widthMm} mm
-            <span className="text-neutral-600">|</span>
-            <span className="text-emerald-400 font-bold">Alto:</span> {printSize.heightMm} mm
-          </span>
-
-          <span className="flex items-center gap-1 bg-neutral-900/90 border border-neutral-800 px-2.5 py-1 rounded-full text-[10px] text-neutral-400 font-medium">
-            Proporción: {printSize.id === '30x40' ? '3:4 (Cuadro Fotográfico)' : printSize.id === '50x70' ? '5:7 (Póster Galería)' : '1:1.41 (ISO Serie A)'}
-          </span>
-
-          <span className="hidden md:inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-1 rounded-full text-[10px] font-bold">
-            300 DPI ({printSize.widthPx300Dpi} × {printSize.heightPx300Dpi} px)
-          </span>
-        </div>
-
+      <div className="w-full h-full flex items-center justify-center p-1 sm:p-2">
         {/* Contenedor principal imprimible con relación de aspecto matemática exacta */}
         <div
           ref={ref}
@@ -59,9 +39,10 @@ export const PosterRenderer = forwardRef<HTMLDivElement, PosterRendererProps>(
           style={{
             backgroundColor: config.backgroundColor || '#FFFFFF',
             aspectRatio: `${printSize.widthMm} / ${printSize.heightMm}`,
-            width: '100%',
-            maxWidth: printSize.aspectRatioRatio >= 0.74 ? '520px' : '460px',
-            maxHeight: 'calc(100vh - 165px)',
+            height: '100%',
+            maxHeight: 'calc(100vh - 5.5rem)',
+            maxWidth: '100%',
+            width: 'auto',
           }}
         >
           {/* Guías de margen seguro y sangrado de pre-prensa (simulación de 3mm, se ignora al exportar) */}
