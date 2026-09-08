@@ -5,6 +5,7 @@ import { Accordion } from '@chakra-ui/react';
 import { PosterConfig, TemplateType, PrintSizeKey } from '@/types/poster';
 import { PRINT_SIZES } from '@/lib/constants/printSizes';
 import { ColorPickerPopover } from '@/components/ui/ColorPickerPopover';
+import { DEFAULT_PALETTE } from '@/lib/colorPalette';
 import {
   Layers,
   Disc3,
@@ -253,25 +254,23 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                 <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
                   Color de Fondo del Papel
                 </label>
-                {/* Quick Swatches */}
+                {/* Paleta dinámica de 5 colores del álbum para el Fondo */}
                 <div className="flex items-center gap-1.5">
-                  {[
-                    { label: 'Blanco Galería', color: '#FFFFFF' },
-                    { label: 'Off-White / Crema', color: '#FBFBFA' },
-                    { label: 'Gris Estudio', color: '#F3F4F6' },
-                    { label: 'Negro Mate', color: '#121212' },
-                  ].map((swatch) => (
+                  {(config.album.palette && config.album.palette.length > 0
+                    ? config.album.palette.slice(0, 5)
+                    : DEFAULT_PALETTE
+                  ).map((colorHex, idx) => (
                     <button
-                      key={swatch.color}
+                      key={`${colorHex}-${idx}`}
                       type="button"
-                      title={swatch.label}
-                      onClick={() => handleBgColor(swatch.color)}
+                      title={`Color del álbum ${idx + 1}: ${colorHex}`}
+                      onClick={() => handleBgColor(colorHex)}
                       className={`w-4 h-4 rounded-full border shadow-sm transition-transform ${
-                        config.backgroundColor?.toUpperCase() === swatch.color.toUpperCase()
+                        config.backgroundColor?.toUpperCase() === colorHex.toUpperCase()
                           ? 'scale-125 border-emerald-500 ring-2 ring-emerald-500/40'
                           : 'border-neutral-700 hover:scale-110'
                       }`}
-                      style={{ backgroundColor: swatch.color }}
+                      style={{ backgroundColor: colorHex }}
                     />
                   ))}
                 </div>
@@ -300,13 +299,14 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                   onChange={(hex) => handleBgColor(hex)}
                   title="Color de Fondo del Papel"
                   presets={[
+                    ...(config.album.palette?.slice(0, 5).map((hex, i) => ({
+                      label: `Color Álbum ${i + 1}`,
+                      hex,
+                    })) || []),
                     { label: 'Blanco Galería', hex: '#FFFFFF' },
                     { label: 'Off-White / Crema', hex: '#FBFBFA' },
                     { label: 'Gris Estudio', hex: '#F3F4F6' },
                     { label: 'Negro Mate', hex: '#121212' },
-                    { label: 'Azul Noche', hex: '#0B132B' },
-                    { label: 'Borgoña', hex: '#1C0D13' },
-                    { label: 'Verde Pino', hex: '#0A1C14' },
                   ]}
                 />
               </div>

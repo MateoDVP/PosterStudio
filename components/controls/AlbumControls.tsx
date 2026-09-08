@@ -427,19 +427,63 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
               </div>
             </div>
 
-            {/* Fecha / Año */}
+            {/* Fecha / Año y Duración */}
             {config.template === 'album-gallery' && (
-              <div>
-                <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
-                  Fecha / Año de Lanzamiento
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 05/06/2022 o 2022"
-                  value={album.releaseDate}
-                  onChange={(e) => updateAlbum({ releaseDate: e.target.value })}
-                  className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-emerald-500"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
+                    Fecha de Lanzamiento
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Septiembre 07, 2026"
+                    value={album.releaseDate}
+                    onChange={(e) => updateAlbum({ releaseDate: e.target.value })}
+                    className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
+                    Duración del Álbum
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 54 min 20 seg o 1 h 14 min"
+                    value={album.totalDuration || ''}
+                    onChange={(e) => updateAlbum({ totalDuration: e.target.value })}
+                    className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Paleta de Colores en Póster (5 Cuadros de la carátula) */}
+            {config.template === 'album-gallery' && (
+              <div className="pt-2 border-t border-neutral-800/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-neutral-300 font-medium">Paleta de Colores en Póster</span>
+                    <p className="text-[10px] text-neutral-500">5 cuadros encima del artista</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={album.showPalette !== false}
+                    onChange={(e) => updateAlbum({ showPalette: e.target.checked })}
+                    className="w-4 h-4 accent-emerald-500 rounded cursor-pointer"
+                  />
+                </div>
+                {album.palette && album.palette.length > 0 && (
+                  <div className="flex items-center gap-1.5 pt-0.5">
+                    {album.palette.slice(0, 5).map((hex, idx) => (
+                      <div
+                        key={`${hex}-${idx}`}
+                        className="w-5 h-5 rounded flex-shrink-0 border border-neutral-700"
+                        style={{ backgroundColor: hex }}
+                        title={hex}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </Accordion.ItemBody>

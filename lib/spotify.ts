@@ -84,6 +84,61 @@ import { ExtractedMusicData } from '@/types/poster';
 export type { ExtractedMusicData };
 
 
+export const SPANISH_MONTHS = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+
+/**
+ * Formatea una fecha al formato requerido: "Septiembre 07, 2026"
+ */
+export function formatReleaseDate(rawDate: string): string {
+  if (!rawDate) return '';
+  const trimmed = rawDate.trim();
+
+  // Si ya está en formato "Mes DD, YYYY"
+  const isSpanish = SPANISH_MONTHS.some((m) => trimmed.toLowerCase().startsWith(m.toLowerCase()));
+  if (isSpanish && trimmed.includes(',')) return trimmed;
+
+  // Formato ISO YYYY-MM-DD
+  if (trimmed.includes('-')) {
+    const parts = trimmed.split('-');
+    if (parts.length === 3) {
+      const year = parts[0];
+      const mIdx = parseInt(parts[1], 10) - 1;
+      const day = parts[2].padStart(2, '0');
+      if (mIdx >= 0 && mIdx < 12) {
+        return `${SPANISH_MONTHS[mIdx]} ${day}, ${year}`;
+      }
+    } else if (parts.length === 1 && parts[0].length === 4) {
+      return parts[0];
+    }
+  }
+
+  // Formato DD/MM/YYYY
+  if (trimmed.includes('/')) {
+    const parts = trimmed.split('/');
+    if (parts.length === 3) {
+      const day = parts[0].padStart(2, '0');
+      const mIdx = parseInt(parts[1], 10) - 1;
+      const year = parts[2];
+      if (mIdx >= 0 && mIdx < 12) {
+        return `${SPANISH_MONTHS[mIdx]} ${day}, ${year}`;
+      }
+    }
+  }
+
+  const d = new Date(trimmed);
+  if (!isNaN(d.getTime())) {
+    const m = SPANISH_MONTHS[d.getUTCMonth()];
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const y = d.getUTCFullYear();
+    return `${m} ${day}, ${y}`;
+  }
+
+  return trimmed;
+}
+
 /**
  * Format milliseconds to MM:SS
  */
@@ -92,6 +147,41 @@ export function formatDuration(ms: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Formatea duración total en milisegundos a texto elegante para álbumes
+ * Ej: "54 min 20 seg" o "1 h 14 min"
+ */
+export function formatAlbumDuration(ms: number): string {
+  if (!ms || ms <= 0) return '';
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return minutes > 0 ? `${hours} h ${minutes} min` : `${hours} h`;
+  }
+  return seconds > 0 ? `${minutes} min ${seconds} seg` : `${minutes} min`;
+}
+
+/**
+ * Calcula la duración total a partir de una lista de canciones con formato "MM:SS"
+ */
+export function calculateTotalDurationFromTracks(tracks: { duration?: string }[]): string {
+  if (!tracks || tracks.length === 0) return '';
+  let totalSec = 0;
+  for (const t of tracks) {
+    if (t.duration && t.duration.includes(':')) {
+      const parts = t.duration.split(':');
+      const m = parseInt(parts[0], 10) || 0;
+      const s = parseInt(parts[1], 10) || 0;
+      totalSec += m * 60 + s;
+    }
+  }
+  if (totalSec === 0) return '';
+  return formatAlbumDuration(totalSec * 1000);
 }
 
 /**
@@ -117,21 +207,21 @@ export async function fetchViaSpotifyApi(
     }
     const album = await albumRes.json();
 
-
-
     // Collect all tracks (handle pagination if > 50)
-    let tracks = album.tracks.items.map((t: any, i: number) => ({
+    let rawItems = [...(album.tracks?.items || [])];
+    let tracks = rawItems.map((t: any, i: number) => ({
       id: t.id || `track-${i + 1}`,
       number: t.track_number || i + 1,
       title: t.name,
       duration: t.duration_ms ? formatDuration(t.duration_ms) : undefined,
     }));
 
-    let nextUrl = album.tracks.next;
+    let nextUrl = album.tracks?.next;
     while (nextUrl && tracks.length < 100) {
       const nextRes = await fetch(nextUrl, { headers });
       if (!nextRes.ok) break;
       const nextData = await nextRes.json();
+      rawItems = [...rawItems, ...nextData.items];
       const moreTracks = nextData.items.map((t: any, i: number) => ({
         id: t.id || `track-${tracks.length + i + 1}`,
         number: t.track_number || tracks.length + i + 1,
@@ -145,22 +235,22 @@ export async function fetchViaSpotifyApi(
     const coverUrl = album.images?.[0]?.url || '';
     const artist = album.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist';
 
-    // Format release date (YYYY-MM-DD to DD/MM/YYYY)
-    let releaseDate = album.release_date || '';
-    if (releaseDate.includes('-')) {
-      const parts = releaseDate.split('-');
-      if (parts.length === 3) {
-        releaseDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-      } else if (parts.length === 1) {
-        releaseDate = parts[0];
-      }
-    }
+    // Duración total acumulada de todas las canciones
+    const totalDurationMs = rawItems.reduce(
+      (sum: number, t: any) => sum + (t.duration_ms || 0),
+      0
+    );
+    const totalDuration = formatAlbumDuration(totalDurationMs);
+
+    // Formatear fecha de lanzamiento al estilo "Septiembre 07, 2026"
+    const releaseDate = formatReleaseDate(album.release_date || '');
 
     return {
       type: 'album',
       title: album.name,
       artist,
       releaseDate,
+      totalDuration,
       coverUrl,
       upc: album.external_ids?.upc,
       spotifyUri: album.uri || `spotify:album:${id}`,

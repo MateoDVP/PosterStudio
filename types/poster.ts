@@ -38,6 +38,8 @@ export interface AlbumData {
   titleColor?: string;
   artistColor?: string;
   tracklistColor?: string;
+  palette?: string[]; // 5 colores dominantes extraídos con ColorThief
+  showPalette?: boolean; // Alternar visibilidad de los cuadritos de paleta en el póster
 }
 
 export interface PlayerData {
@@ -91,6 +93,7 @@ export interface ExtractedMusicData {
     duration?: string;
   }[];
   durationMs?: number;
+  totalDuration?: string;
 }
 
 
