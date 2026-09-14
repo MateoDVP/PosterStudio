@@ -443,7 +443,7 @@ export async function generatePosterSvgString(
   } else {
     // --- PLANTILLA SONG PLAYER ---
     const player = config.player;
-    const pad = width * 0.08;
+    const pad = width * (isSquarer ? 0.055 : 0.075);
     const photoW = width - 2 * pad;
     const photoH = photoW;
     const photoX = pad;
@@ -468,50 +468,25 @@ export async function generatePosterSvgString(
     const coverLayer = `
     <g id="Capa_Foto_Reproductor">
       <clipPath id="Photo_Radius">
-        <rect x="${photoX.toFixed(2)}" y="${photoY.toFixed(2)}" width="${photoW.toFixed(2)}" height="${photoH.toFixed(2)}" rx="${((player.coverBorderRadius || 8) * 0.4 * baseScale).toFixed(2)}" ry="${((player.coverBorderRadius || 8) * 0.4 * baseScale).toFixed(2)}" />
+        <rect x="${photoX.toFixed(2)}" y="${photoY.toFixed(2)}" width="${photoW.toFixed(2)}" height="${photoH.toFixed(2)}" rx="${((player.coverBorderRadius || 8) * 0.5 * baseScale).toFixed(2)}" ry="${((player.coverBorderRadius || 8) * 0.5 * baseScale).toFixed(2)}" />
       </clipPath>
       ${coverBase64
         ? `<image href="${coverBase64}" xlink:href="${coverBase64}" x="${photoX.toFixed(2)}" y="${photoY.toFixed(2)}" width="${photoW.toFixed(2)}" height="${photoH.toFixed(2)}" clip-path="url(#Photo_Radius)" preserveAspectRatio="xMidYMid slice" />`
-        : `<rect x="${photoX.toFixed(2)}" y="${photoY.toFixed(2)}" width="${photoW.toFixed(2)}" height="${photoH.toFixed(2)}" fill="#f3f4f6" clip-path="url(#Photo_Radius)" />`
+        : `<rect x="${photoX.toFixed(2)}" y="${photoY.toFixed(2)}" width="${photoW.toFixed(2)}" height="${photoH.toFixed(2)}" fill="#171717" clip-path="url(#Photo_Radius)" />`
       }
     </g>`;
 
-    const titleColor = player.titleColor || textColor || '#0a0a0a';
-    const artistColor = player.artistColor || textColor || '#737373';
-    const contentStartY = photoY + photoH + 12 * baseScale;
-    const playerTitleSize = 9.5 * baseScale;
-    const playerArtistSize = 6.0 * baseScale;
+    const titleColor = player.titleColor || textColor || '#FFFFFF';
+    const artistColor = player.artistColor || textColor || '#D4D4D4';
+    const contentStartY = photoY + photoH + 11.5 * baseScale;
+    const playerTitleSize = 8.5 * baseScale;
+    const playerArtistSize = 5.2 * baseScale;
 
-    const textLayer = `
-    <g id="Capa_Titulo_Artista">
-      <text x="${pad.toFixed(2)}" y="${contentStartY.toFixed(2)}" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="bold" font-size="${playerTitleSize.toFixed(2)}" fill="${titleColor}">${escapeXml(player.title || 'Canción')}</text>
-      <text x="${pad.toFixed(2)}" y="${(contentStartY + 9 * baseScale).toFixed(2)}" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="normal" font-size="${playerArtistSize.toFixed(2)}" fill="${artistColor}">${escapeXml(player.artist || 'Artista')}</text>
-    </g>`;
-
-    // Barra de reproducción
-    const barY = contentStartY + 22 * baseScale;
-    const barW = width - 2 * pad;
-    const progressPercent = (player.progressPercent || 30) / 100;
-    const fillW = barW * progressPercent;
-    const playerTimeSize = 4.2 * baseScale;
-
-    const progressLayer = `
-    <g id="Capa_Barra_Progreso">
-      <!-- Barra fondo -->
-      <rect x="${pad.toFixed(2)}" y="${barY.toFixed(2)}" width="${barW.toFixed(2)}" height="${(2.0 * baseScale).toFixed(2)}" rx="${(1.0 * baseScale).toFixed(2)}" fill="#737373" opacity="0.3" />
-      <!-- Barra activa -->
-      <rect x="${pad.toFixed(2)}" y="${barY.toFixed(2)}" width="${fillW.toFixed(2)}" height="${(2.0 * baseScale).toFixed(2)}" rx="${(1.0 * baseScale).toFixed(2)}" fill="${textColor}" />
-      <circle cx="${(pad + fillW).toFixed(2)}" cy="${(barY + 1.0 * baseScale).toFixed(2)}" r="${(2.8 * baseScale).toFixed(2)}" fill="${textColor}" />
-      <!-- Tiempos -->
-      <text x="${pad.toFixed(2)}" y="${(barY + 8 * baseScale).toFixed(2)}" font-family="'Montserrat', 'Inter', monospace" font-weight="normal" font-size="${playerTimeSize.toFixed(2)}" fill="${artistColor}">${escapeXml(player.currentTime || '1:24')}</text>
-      <text x="${(pad + barW).toFixed(2)}" y="${(barY + 8 * baseScale).toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', monospace" font-weight="normal" font-size="${playerTimeSize.toFixed(2)}" fill="${artistColor}">${escapeXml(player.totalTime || '3:45')}</text>
-    </g>`;
-
-    // Spotify Code
-    const codeW = 85 * baseScale;
+    // Spotify Code alineado a la derecha de Título y Artista
+    const codeW = 68 * baseScale;
     const codeH = codeW * 0.25;
-    const codeX = (width - codeW) / 2;
-    const codeY = height - pad - codeH;
+    const codeX = width - pad - codeW;
+    const codeY = contentStartY - 6.5 * baseScale;
     const scaleX = codeW / 400;
     const scaleY = codeH / 100;
 
@@ -522,7 +497,123 @@ export async function generatePosterSvgString(
       </g>
     </g>`;
 
-    layersXml = `${bgLayer}\n${coverLayer}\n${textLayer}\n${progressLayer}\n${spotifyLayer}`;
+    const textLayer = `
+    <g id="Capa_Titulo_Artista">
+      <text x="${pad.toFixed(2)}" y="${contentStartY.toFixed(2)}" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="900" font-size="${playerTitleSize.toFixed(2)}" fill="${titleColor}" letter-spacing="0.2">${escapeXml((player.title || 'CANCIÓN').toUpperCase())}</text>
+      <text x="${pad.toFixed(2)}" y="${(contentStartY + 6.8 * baseScale).toFixed(2)}" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="600" font-size="${playerArtistSize.toFixed(2)}" fill="${artistColor}" opacity="0.85">${escapeXml(player.artist || 'Artista')}</text>
+    </g>`;
+
+    // Barra de reproducción y tiempos
+    const barY = contentStartY + 16.5 * baseScale;
+    const barW = width - 2 * pad;
+    const progressPercent = Math.min(1, Math.max(0, (player.progressPercent || 30) / 100));
+    const fillW = barW * progressPercent;
+    const playerTimeSize = 3.6 * baseScale;
+
+    const progressLayer = `
+    <g id="Capa_Barra_Progreso">
+      <!-- Barra fondo -->
+      <rect x="${pad.toFixed(2)}" y="${barY.toFixed(2)}" width="${barW.toFixed(2)}" height="${(1.8 * baseScale).toFixed(2)}" rx="${(0.9 * baseScale).toFixed(2)}" fill="${titleColor}" opacity="0.2" />
+      <!-- Barra activa -->
+      <rect x="${pad.toFixed(2)}" y="${barY.toFixed(2)}" width="${fillW.toFixed(2)}" height="${(1.8 * baseScale).toFixed(2)}" rx="${(0.9 * baseScale).toFixed(2)}" fill="${titleColor}" />
+      <!-- Perilla circular -->
+      <circle cx="${(pad + fillW).toFixed(2)}" cy="${(barY + 0.9 * baseScale).toFixed(2)}" r="${(2.2 * baseScale).toFixed(2)}" fill="${titleColor}" />
+      <!-- Tiempos -->
+      <text x="${pad.toFixed(2)}" y="${(barY + 6.2 * baseScale).toFixed(2)}" font-family="'Montserrat', 'Inter', monospace" font-weight="500" font-size="${playerTimeSize.toFixed(2)}" fill="${artistColor}" opacity="0.8">${escapeXml(player.currentTime || '0:58')}</text>
+      <text x="${(pad + barW).toFixed(2)}" y="${(barY + 6.2 * baseScale).toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', monospace" font-weight="500" font-size="${playerTimeSize.toFixed(2)}" fill="${artistColor}" opacity="0.8">${escapeXml(player.totalTime || '3:27')}</text>
+    </g>`;
+
+    // Controles de reproducción vectoriales
+    const controlsY = barY + 16.5 * baseScale;
+    const iconColor = titleColor;
+    const isPlaying = player.isPlaying !== false;
+    const circleRadius = 7.5 * baseScale;
+    const centerX = width / 2;
+
+    const isLightBg =
+      bgColor === '#FFFFFF' ||
+      bgColor.toLowerCase() === '#fff' ||
+      bgColor.toLowerCase() === 'white' ||
+      (bgColor.startsWith('#') &&
+        bgColor.length === 7 &&
+        parseInt(bgColor.slice(1, 3), 16) * 0.299 +
+          parseInt(bgColor.slice(3, 5), 16) * 0.587 +
+          parseInt(bgColor.slice(5, 7), 16) * 0.114 >
+          180);
+    const circleInnerColor = isLightBg ? '#FFFFFF' : '#000000';
+
+    const controlsLayer = `
+    <g id="Capa_Controles_Reproduccion">
+      <!-- 1. Shuffle (Izquierda extrema) -->
+      <g transform="translate(${(pad + 2 * baseScale).toFixed(2)}, ${(controlsY - 4 * baseScale).toFixed(2)}) scale(${(0.35 * baseScale).toFixed(3)})">
+        <path d="M16 3h5v5 M4 20L21 3 M21 16v5h-5 M15 15l6 6 M4 4l5 5" fill="none" stroke="${iconColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+
+      <!-- 2. Skip Back (Izquierda) -->
+      <g transform="translate(${(centerX - 24 * baseScale).toFixed(2)}, ${(controlsY - 4.5 * baseScale).toFixed(2)}) scale(${(0.38 * baseScale).toFixed(3)})">
+        <polygon points="19 20 9 12 19 4 19 20" fill="${iconColor}"/>
+        <line x1="5" y1="19" x2="5" y2="5" stroke="${iconColor}" stroke-width="3" stroke-linecap="round"/>
+      </g>
+
+      <!-- 3. Botón Central Circular de Play/Pausa -->
+      <circle cx="${centerX.toFixed(2)}" cy="${controlsY.toFixed(2)}" r="${circleRadius.toFixed(2)}" fill="${titleColor}" />
+      ${
+        isPlaying
+          ? `<!-- Icono Pausa (||) perfectamente simétrico -->
+             <rect x="${(centerX - 2.5 * baseScale).toFixed(2)}" y="${(controlsY - 3.8 * baseScale).toFixed(2)}" width="${(1.8 * baseScale).toFixed(2)}" height="${(7.6 * baseScale).toFixed(2)}" rx="${(0.5 * baseScale).toFixed(2)}" fill="${circleInnerColor}" />
+             <rect x="${(centerX + 0.7 * baseScale).toFixed(2)}" y="${(controlsY - 3.8 * baseScale).toFixed(2)}" width="${(1.8 * baseScale).toFixed(2)}" height="${(7.6 * baseScale).toFixed(2)}" rx="${(0.5 * baseScale).toFixed(2)}" fill="${circleInnerColor}" />`
+          : `<!-- Icono Play (▶) matemáticamente centrado -->
+             <polygon points="${(centerX - 2.2 * baseScale).toFixed(2)},${(controlsY - 3.8 * baseScale).toFixed(2)} ${(centerX + 3.8 * baseScale).toFixed(2)},${controlsY.toFixed(2)} ${(centerX - 2.2 * baseScale).toFixed(2)},${(controlsY + 3.8 * baseScale).toFixed(2)}" fill="${circleInnerColor}" />`
+      }
+
+      <!-- 4. Skip Forward (Derecha) -->
+      <g transform="translate(${(centerX + 15 * baseScale).toFixed(2)}, ${(controlsY - 4.5 * baseScale).toFixed(2)}) scale(${(0.38 * baseScale).toFixed(3)})">
+        <polygon points="5 4 15 12 5 20 5 4" fill="${iconColor}"/>
+        <line x1="19" y1="5" x2="19" y2="19" stroke="${iconColor}" stroke-width="3" stroke-linecap="round"/>
+      </g>
+
+      <!-- 5. Repeat (Derecha) -->
+      <g transform="translate(${(width - pad - 18 * baseScale).toFixed(2)}, ${(controlsY - 4 * baseScale).toFixed(2)}) scale(${(0.35 * baseScale).toFixed(3)})">
+        <polyline points="17 1 21 5 17 9" fill="none" stroke="${iconColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 11V9a4 4 0 0 1 4-4h14" fill="none" stroke="${iconColor}" stroke-width="2.2" stroke-linecap="round"/>
+        <polyline points="7 23 3 19 7 15" fill="none" stroke="${iconColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M21 13v2a4 4 0 0 1-4 4H3" fill="none" stroke="${iconColor}" stroke-width="2.2" stroke-linecap="round"/>
+      </g>
+
+      <!-- 6. Heart (Extremo Derecho) -->
+      <g transform="translate(${(width - pad - 8 * baseScale).toFixed(2)}, ${(controlsY - 4 * baseScale).toFixed(2)}) scale(${(0.35 * baseScale).toFixed(3)})">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" ${player.isLiked ? `fill="${titleColor}"` : 'fill="none"'} stroke="${iconColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+    </g>`;
+
+    // Paleta de colores en la parte inferior (5 Rectángulos como en la referencia)
+    let paletteLayer = '';
+    if (player.showPalette !== false) {
+      const paletteColors = (player.palette && player.palette.length > 0
+        ? player.palette
+        : ['#D6C6B6', '#B0A296', '#696058', '#403A36', '#1E1B19']
+      ).slice(0, 5);
+
+      const paletteY = height - pad - (isSquarer ? 4.5 : 5.5) * baseScale;
+      const swatchH = (isSquarer ? 4.5 : 5.5) * baseScale;
+      const swatchGap = (isSquarer ? 2.2 : 2.8) * baseScale;
+      const totalAvailableW = width - 2 * pad;
+      const swatchW = (totalAvailableW - (paletteColors.length - 1) * swatchGap) / paletteColors.length;
+
+      const swatchesXml = paletteColors
+        .map((hex, i) => {
+          const x = pad + i * (swatchW + swatchGap);
+          return `<rect x="${x.toFixed(2)}" y="${paletteY.toFixed(2)}" width="${swatchW.toFixed(2)}" height="${swatchH.toFixed(2)}" rx="${(0.8 * baseScale).toFixed(2)}" fill="${hex}" />`;
+        })
+        .join('\n      ');
+
+      paletteLayer = `
+    <g id="Capa_Paleta_Colores">
+      ${swatchesXml}
+    </g>`;
+    }
+
+    layersXml = `${bgLayer}\n${coverLayer}\n${textLayer}\n${spotifyLayer}\n${progressLayer}\n${controlsLayer}${paletteLayer}`;
   }
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>

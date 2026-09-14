@@ -53,11 +53,14 @@ export interface PlayerData {
   totalTime: string; // e.g. "-2:53"
   progressPercent: number; // 0 to 100
   isLiked: boolean;
+  isPlaying?: boolean; // true = icono Pausa (||) como en la referencia, false = icono Play (▶)
   isBlackAndWhite: boolean;
   coverBorderRadius: number; // 0 to 24px
   soundwaveColor: string;
   titleColor?: string;
   artistColor?: string;
+  palette?: string[]; // 5 colores dominantes de la carátula
+  showPalette?: boolean; // visibilidad de los 5 rectángulos de paleta al pie
 }
 
 export interface PosterConfig {

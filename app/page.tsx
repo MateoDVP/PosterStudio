@@ -51,13 +51,16 @@ const INITIAL_POSTER_CONFIG: PosterConfig = {
     artist: '',
     coverUrl: '',
     spotifyUri: '',
-    currentTime: '0:00',
-    totalTime: '-0:00',
-    progressPercent: 25,
+    currentTime: '0:58',
+    totalTime: '3:27',
+    progressPercent: 30,
     isLiked: true,
+    isPlaying: true,
     isBlackAndWhite: false,
     coverBorderRadius: 10,
     soundwaveColor: '#000000',
+    palette: DEFAULT_PALETTE,
+    showPalette: true,
   },
 };
 
@@ -95,6 +98,10 @@ export default function PosterStudioPage() {
           ...prev,
           album: {
             ...prev.album,
+            palette,
+          },
+          player: {
+            ...prev.player,
             palette,
           },
         };

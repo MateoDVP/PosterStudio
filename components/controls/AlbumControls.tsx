@@ -16,6 +16,8 @@ import {
   Check,
   ChevronDown,
   Sliders,
+  Play,
+  Pause,
 } from 'lucide-react';
 
 interface AlbumControlsProps {
@@ -457,35 +459,53 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
               </div>
             )}
 
-            {/* Paleta de Colores en Póster (5 Cuadros de la carátula) */}
-            {config.template === 'album-gallery' && (
-              <div className="pt-2 border-t border-neutral-800/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-neutral-300 font-medium">Paleta de Colores en Póster</span>
-                    <p className="text-[10px] text-neutral-500">5 cuadros encima del artista</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={album.showPalette !== false}
-                    onChange={(e) => updateAlbum({ showPalette: e.target.checked })}
-                    className="w-4 h-4 accent-emerald-500 rounded cursor-pointer"
-                  />
+            {/* Paleta de Colores en Póster / Placa (5 Cuadros de la carátula) */}
+            <div className="pt-2 border-t border-neutral-800/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs text-neutral-300 font-medium">
+                    {config.template === 'song-player'
+                      ? 'Paleta de Colores (5 Rectángulos al pie)'
+                      : 'Paleta de Colores en Póster'}
+                  </span>
+                  <p className="text-[10px] text-neutral-500">
+                    {config.template === 'song-player'
+                      ? '5 franjas de color al pie de la placa'
+                      : '5 cuadros encima del artista'}
+                  </p>
                 </div>
-                {album.palette && album.palette.length > 0 && (
-                  <div className="flex items-center gap-1.5 pt-0.5">
-                    {album.palette.slice(0, 5).map((hex, idx) => (
+                <input
+                  type="checkbox"
+                  checked={
+                    config.template === 'song-player'
+                      ? player.showPalette !== false
+                      : album.showPalette !== false
+                  }
+                  onChange={(e) => {
+                    if (config.template === 'song-player') {
+                      updatePlayer({ showPalette: e.target.checked });
+                    } else {
+                      updateAlbum({ showPalette: e.target.checked });
+                    }
+                  }}
+                  className="w-4 h-4 accent-emerald-500 rounded cursor-pointer"
+                />
+              </div>
+              {((config.template === 'song-player' ? player.palette || album.palette : album.palette) || []).length > 0 && (
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  {(config.template === 'song-player' ? player.palette || album.palette : album.palette)!
+                    .slice(0, 5)
+                    .map((hex, idx) => (
                       <div
                         key={`${hex}-${idx}`}
-                        className="w-5 h-5 rounded flex-shrink-0 border border-neutral-700"
+                        className="w-5 h-5 rounded flex-shrink-0 border border-neutral-700 shadow-sm"
                         style={{ backgroundColor: hex }}
                         title={hex}
                       />
                     ))}
-                  </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </Accordion.ItemBody>
         </Accordion.ItemContent>
       </Accordion.Item>
@@ -647,9 +667,42 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
               />
             </div>
 
-            {/* Controles específicos del Reproductor: Minutero, Like, Progreso */}
+            {/* Controles específicos del Reproductor: Estado, Minutero, Like, Progreso */}
             {config.template === 'song-player' && (
               <div className="space-y-3 pt-2 border-t border-neutral-800/80">
+                {/* Selector de Estado del Botón Central (Pausa || vs Play ▶) */}
+                <div>
+                  <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5">
+                    Icono del Botón Central
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => updatePlayer({ isPlaying: true })}
+                      className={`py-1.5 px-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                        player.isPlaying !== false
+                          ? 'bg-neutral-800 border-emerald-500 text-emerald-400'
+                          : 'bg-transparent border-neutral-800 text-neutral-400 hover:text-neutral-200'
+                      }`}
+                    >
+                      <Pause className="w-3.5 h-3.5 fill-current" />
+                      <span>Pausa (||)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updatePlayer({ isPlaying: false })}
+                      className={`py-1.5 px-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                        player.isPlaying === false
+                          ? 'bg-neutral-800 border-emerald-500 text-emerald-400'
+                          : 'bg-transparent border-neutral-800 text-neutral-400 hover:text-neutral-200'
+                      }`}
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>Play (▶)</span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Interruptor de canción favorita (Corazón Like) */}
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-neutral-300 flex items-center gap-1.5">
