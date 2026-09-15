@@ -11,6 +11,8 @@
 **PosterStudio** es una aplicación web de ingeniería de preprensa digital de alta precisión diseñada para automatizar la maquetación y generación de pósters musicales minimalistas listos para impresión física industrial a **300 DPI reales**, reemplazando procesos manuales y repetitivos en Adobe Illustrator, disponible en descarga tanto en jpg y svg vectoriales, y png como imagen.
 
 Conecta en tiempo real la **API Oficial de Spotify** para metadatos y la **API de iTunes / Apple Music** para carátulas de estudio de ultra-alta resolución, aplicando rigurosas fórmulas matemáticas de conversión física a digital.
+<img width="1794" height="897" alt="Captura de pantalla_15-9-2026_135622_localhost" src="https://github.com/user-attachments/assets/04694f67-13e7-4738-81db-6a911bba151b" />
+<img width="1794" height="897" alt="Captura de pantalla_15-9-2026_135813_localhost" src="https://github.com/user-attachments/assets/6986dfad-a4cb-46ec-93e5-a35893eda949" />
 
 ---
 
