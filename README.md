@@ -1,4 +1,4 @@
-# PosterStudio Engine de Pre-prensa Digital & Pósters Musicales (300 DPI)
+# PosterStudio Engine de Pre-prensa Digital & Pósters Musicales
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
@@ -8,7 +8,7 @@
 [![Apple Music](https://img.shields.io/badge/Apple_Music-iTunes_API_3000px-FC3C44?style=flat-square&logo=apple-music)](https://developer.apple.com/)
 [![Print Ready](https://img.shields.io/badge/Prepress-300_DPI_Lossless-emerald?style=flat-square)](https://en.wikipedia.org/wiki/Dots_per_inch)
 
-**PosterStudio** es una aplicación web de ingeniería de preprensa digital de alta precisión diseñada para automatizar la maquetación y generación de pósters musicales minimalistas listos para impresión física industrial a **300 DPI reales**, reemplazando procesos manuales y repetitivos en Adobe Illustrator o InDesign.
+**PosterStudio** es una aplicación web de ingeniería de preprensa digital de alta precisión diseñada para automatizar la maquetación y generación de pósters musicales minimalistas listos para impresión física industrial a **300 DPI reales**, reemplazando procesos manuales y repetitivos en Adobe Illustrator, disponible en descarga tanto en jpg y svg vectoriales, y png como imagen.
 
 Conecta en tiempo real la **API Oficial de Spotify** para metadatos y la **API de iTunes / Apple Music** para carátulas de estudio de ultra-alta resolución, aplicando rigurosas fórmulas matemáticas de conversión física a digital.
 
