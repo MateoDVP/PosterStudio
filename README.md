@@ -13,7 +13,7 @@
 Conecta en tiempo real la **API Oficial de Spotify** para metadatos y la **API de iTunes / Apple Music** para carátulas de estudio de ultra-alta resolución, aplicando rigurosas fórmulas matemáticas de conversión física a digital.
 <img width="1794" height="897" alt="Captura de pantalla_15-9-2026_135622_localhost" src="https://github.com/user-attachments/assets/04694f67-13e7-4738-81db-6a911bba151b" />
 <img width="1794" height="897" alt="Captura de pantalla_15-9-2026_135813_localhost" src="https://github.com/user-attachments/assets/6986dfad-a4cb-46ec-93e5-a35893eda949" />
-
+<img width="1794" height="897" alt="Captura de pantalla_15-9-2026_14407_localhost" src="https://github.com/user-attachments/assets/2cefe121-82ca-4305-953e-35929213be8b" />
 ---
 
 ## ⚡ Stack Tecnológico & Integraciones
