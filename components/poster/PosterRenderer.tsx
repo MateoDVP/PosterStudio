@@ -3,9 +3,10 @@
 import React, { forwardRef } from 'react';
 
 import { PosterConfig } from '@/types/poster';
-import { PRINT_SIZES } from '@/lib/constants/printSizes';
+import { getActivePrintSize } from '@/lib/constants/printSizes';
 import { AlbumGalleryTemplate } from './templates/AlbumGalleryTemplate';
 import { SongPlayerTemplate } from './templates/SongPlayerTemplate';
+import { AlbumClassicTemplate } from './templates/AlbumClassicTemplate';
 import { Disc3, ArrowUp, Sparkles } from 'lucide-react';
 
 interface PosterRendererProps {
@@ -15,17 +16,17 @@ interface PosterRendererProps {
 
 export const PosterRenderer = forwardRef<HTMLDivElement, PosterRendererProps>(
   ({ config, showGuides = false }, ref) => {
-    const printSize = PRINT_SIZES[config.sizeKey] || PRINT_SIZES.a3;
+    const printSize = getActivePrintSize(config);
 
     const isAlbumEmpty =
-      config.template === 'album-gallery' &&
-      !config.album.title.trim() &&
-      !config.album.coverUrl.trim();
+      (config.template === 'album-gallery' || config.template === 'album-classic') &&
+      !config.album?.title?.trim() &&
+      !config.album?.coverUrl?.trim();
 
     const isPlayerEmpty =
       config.template === 'song-player' &&
-      !config.player.title.trim() &&
-      !config.player.coverUrl.trim();
+      !config.player?.title?.trim() &&
+      !config.player?.coverUrl?.trim();
 
     const isEmpty = isAlbumEmpty || isPlayerEmpty;
 
@@ -53,8 +54,8 @@ export const PosterRenderer = forwardRef<HTMLDivElement, PosterRendererProps>(
             >
               <div className="w-full h-full border border-dashed border-emerald-500/50 flex flex-col justify-between p-1">
                 <div className="flex justify-between items-center text-[9px] font-mono text-red-500 bg-white/90 px-1.5 py-0.5 rounded shadow-sm">
-                  <span>Línea de corte: {printSize.widthMm} × {printSize.heightMm} mm</span>
-                  <span className="text-emerald-700 font-semibold">Margen seguro imprenta: 3mm</span>
+                  <span>Línea de corte: {(printSize.widthMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} × {(printSize.heightMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} cm</span>
+                  <span className="text-emerald-700 font-semibold">Margen seguro: 3 mm</span>
                 </div>
                 <div className="text-right text-[8px] font-mono text-neutral-500 bg-white/90 px-1 rounded self-end">
                   Pre-prensa 300 DPI
@@ -77,7 +78,7 @@ export const PosterRenderer = forwardRef<HTMLDivElement, PosterRendererProps>(
                 </div>
 
                 <h2 className="text-base sm:text-lg font-bold text-neutral-800 tracking-tight">
-                  Pon el link de tu {config.template === 'album-gallery' ? 'álbum' : 'canción'} para empezar
+                  Pon el link de tu {config.template === 'song-player' ? 'canción' : 'álbum'} para empezar
                 </h2>
 
                 <p className="text-xs text-neutral-500 max-w-xs mt-2 leading-relaxed">
@@ -92,13 +93,24 @@ export const PosterRenderer = forwardRef<HTMLDivElement, PosterRendererProps>(
 
               <div className="w-full mt-6 flex justify-between items-center text-[10px] text-neutral-400 font-mono">
                 <span>{printSize.name}</span>
-                <span>{printSize.widthMm} × {printSize.heightMm} mm @ 300 DPI</span>
+                <span>{(printSize.widthMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} × {(printSize.heightMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} cm @ 300 DPI</span>
               </div>
             </div>
           ) : (
             /* Renderizado de la plantilla activa */
             config.template === 'album-gallery' ? (
               <AlbumGalleryTemplate
+                album={config.album}
+                printSize={printSize}
+                backgroundColor={config.backgroundColor}
+                textColor={config.textColor}
+                enableBlurredBackground={config.enableBlurredBackground}
+                blurredBackgroundOpacity={config.blurredBackgroundOpacity}
+                blurredBackgroundBlur={config.blurredBackgroundBlur}
+                blurredBackgroundOverlay={config.blurredBackgroundOverlay}
+              />
+            ) : config.template === 'album-classic' ? (
+              <AlbumClassicTemplate
                 album={config.album}
                 printSize={printSize}
                 backgroundColor={config.backgroundColor}

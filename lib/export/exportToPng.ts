@@ -61,7 +61,8 @@ export async function exportToPng(
 
     onProgress?.('Descargando archivo PNG...');
     const link = document.createElement('a');
-    link.download = `${filename}-${printSize.id}-300dpi.png`;
+    const finalDownloadName = filename.endsWith('.png') ? filename : `${filename}.png`;
+    link.download = finalDownloadName;
     link.href = dataUrl;
     document.body.appendChild(link);
     link.click();

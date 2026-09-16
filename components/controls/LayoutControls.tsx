@@ -1,19 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Accordion } from '@chakra-ui/react';
-import { PosterConfig, TemplateType, PrintSizeKey } from '@/types/poster';
-import { PRINT_SIZES } from '@/lib/constants/printSizes';
+import { PosterConfig, TemplateType, PrintSizeKey, PresetPrintSizeKey } from '@/types/poster';
+import {
+  PRINT_SIZES,
+  PRESET_PRINT_SIZE_KEYS,
+  DEFAULT_CUSTOM_SIZE,
+  getActivePrintSize,
+} from '@/lib/constants/printSizes';
 import { ColorPickerPopover } from '@/components/ui/ColorPickerPopover';
 import { DEFAULT_PALETTE } from '@/lib/colorPalette';
 import {
   Layers,
   Disc3,
   Music2,
+  LayoutTemplate,
   Palette,
   Sparkles,
   Eye,
   ChevronDown,
+  Sliders,
+  ArrowLeftRight,
 } from 'lucide-react';
 
 interface LayoutControlsProps {
@@ -25,6 +33,239 @@ interface LayoutControlsProps {
 
 const ALL_SECTIONS = ['formato', 'fondo'];
 
+interface CustomSizeEditorProps {
+  config: PosterConfig;
+  activePrintSize: any;
+  onChange: (updater: (prev: PosterConfig) => PosterConfig) => void;
+}
+
+const CustomSizeEditor: React.FC<CustomSizeEditorProps> = ({
+  config,
+  activePrintSize,
+  onChange,
+}) => {
+  const currentW = config.customSize?.widthCm ?? DEFAULT_CUSTOM_SIZE.widthCm;
+  const currentH = config.customSize?.heightCm ?? DEFAULT_CUSTOM_SIZE.heightCm;
+
+  const [widthStr, setWidthStr] = useState<string>(String(currentW));
+  const [heightStr, setHeightStr] = useState<string>(String(currentH));
+
+  // Mantener sincronizado cuando se cambian los valores externamente (chips o invertir orientación)
+  useEffect(() => {
+    setWidthStr(String(currentW));
+  }, [currentW]);
+
+  useEffect(() => {
+    setHeightStr(String(currentH));
+  }, [currentH]);
+
+  const handleWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    setWidthStr(raw);
+
+    const parsed = parseFloat(raw.replace(',', '.'));
+    if (!isNaN(parsed) && parsed > 0) {
+      onChange((prev) => ({
+        ...prev,
+        sizeKey: 'custom',
+        customSize: {
+          widthCm: Math.min(500, parsed),
+          heightCm: prev.customSize?.heightCm ?? DEFAULT_CUSTOM_SIZE.heightCm,
+        },
+      }));
+    }
+  };
+
+  const handleWidthBlur = () => {
+    const parsed = parseFloat(widthStr.replace(',', '.'));
+    if (isNaN(parsed) || parsed < 5) {
+      const fallback = isNaN(parsed) ? DEFAULT_CUSTOM_SIZE.widthCm : 5;
+      setWidthStr(String(fallback));
+      onChange((prev) => ({
+        ...prev,
+        sizeKey: 'custom',
+        customSize: {
+          widthCm: fallback,
+          heightCm: prev.customSize?.heightCm ?? DEFAULT_CUSTOM_SIZE.heightCm,
+        },
+      }));
+    } else if (parsed > 300) {
+      setWidthStr('300');
+      onChange((prev) => ({
+        ...prev,
+        sizeKey: 'custom',
+        customSize: {
+          widthCm: 300,
+          heightCm: prev.customSize?.heightCm ?? DEFAULT_CUSTOM_SIZE.heightCm,
+        },
+      }));
+    } else {
+      setWidthStr(String(parsed));
+    }
+  };
+
+  const handleHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    setHeightStr(raw);
+
+    const parsed = parseFloat(raw.replace(',', '.'));
+    if (!isNaN(parsed) && parsed > 0) {
+      onChange((prev) => ({
+        ...prev,
+        sizeKey: 'custom',
+        customSize: {
+          widthCm: prev.customSize?.widthCm ?? DEFAULT_CUSTOM_SIZE.widthCm,
+          heightCm: Math.min(500, parsed),
+        },
+      }));
+    }
+  };
+
+  const handleHeightBlur = () => {
+    const parsed = parseFloat(heightStr.replace(',', '.'));
+    if (isNaN(parsed) || parsed < 5) {
+      const fallback = isNaN(parsed) ? DEFAULT_CUSTOM_SIZE.heightCm : 5;
+      setHeightStr(String(fallback));
+      onChange((prev) => ({
+        ...prev,
+        sizeKey: 'custom',
+        customSize: {
+          widthCm: prev.customSize?.widthCm ?? DEFAULT_CUSTOM_SIZE.widthCm,
+          heightCm: fallback,
+        },
+      }));
+    } else if (parsed > 300) {
+      setHeightStr('300');
+      onChange((prev) => ({
+        ...prev,
+        sizeKey: 'custom',
+        customSize: {
+          widthCm: prev.customSize?.widthCm ?? DEFAULT_CUSTOM_SIZE.widthCm,
+          heightCm: 300,
+        },
+      }));
+    } else {
+      setHeightStr(String(parsed));
+    }
+  };
+
+  const handleSwap = () => {
+    onChange((prev) => ({
+      ...prev,
+      sizeKey: 'custom',
+      customSize: {
+        widthCm: currentH,
+        heightCm: currentW,
+      },
+    }));
+  };
+
+  return (
+    <div className="mt-2 p-3 rounded-xl bg-neutral-900/80 border border-neutral-800 space-y-3 shadow-inner">
+      <div className="grid grid-cols-2 gap-2.5">
+        <div>
+          <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
+            Ancho (cm)
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={widthStr}
+              onChange={handleWidthChange}
+              onBlur={handleWidthBlur}
+              placeholder="40"
+              className="w-full bg-neutral-950 border border-neutral-700/80 rounded-lg px-2.5 py-1.5 text-xs text-neutral-100 font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40 transition-colors"
+            />
+            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-neutral-500 font-mono pointer-events-none">
+              cm
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
+            Alto (cm)
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={heightStr}
+              onChange={handleHeightChange}
+              onBlur={handleHeightBlur}
+              placeholder="50"
+              className="w-full bg-neutral-950 border border-neutral-700/80 rounded-lg px-2.5 py-1.5 text-xs text-neutral-100 font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40 transition-colors"
+            />
+            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-neutral-500 font-mono pointer-events-none">
+              cm
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Botón de invertir orientación + Ratio */}
+      <div className="flex items-center justify-between pt-1">
+        <button
+          type="button"
+          onClick={handleSwap}
+          className="flex items-center gap-1.5 text-[10px] font-medium text-neutral-300 hover:text-emerald-300 px-2.5 py-1 rounded-md bg-neutral-800 hover:bg-neutral-750 transition-colors border border-neutral-700/70"
+          title="Intercambiar ancho y alto"
+        >
+          <ArrowLeftRight className="w-3 h-3 text-emerald-400" />
+          <span>Invertir orientación</span>
+        </button>
+
+        <div className="text-[10px] font-mono text-neutral-400">
+          Ratio: <span className="text-emerald-400 font-semibold">{activePrintSize.aspectRatioRatio.toFixed(2)}</span>
+        </div>
+      </div>
+
+      {/* Atajos de marcos populares en cm */}
+      <div>
+        <div className="text-[9px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
+          Medidas frecuentes (cm)
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {[
+            { label: '20 × 30', w: 20, h: 30 },
+            { label: '30 × 30', w: 30, h: 30 },
+            { label: '40 × 50', w: 40, h: 50 },
+            { label: '40 × 60', w: 40, h: 60 },
+            { label: '60 × 90', w: 60, h: 90 },
+          ].map((preset) => {
+            const isPresetActive = currentW === preset.w && currentH === preset.h;
+
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => {
+                  onChange((prev) => ({
+                    ...prev,
+                    sizeKey: 'custom',
+                    customSize: {
+                      widthCm: preset.w,
+                      heightCm: preset.h,
+                    },
+                  }));
+                }}
+                className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
+                  isPresetActive
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
+                    : 'bg-neutral-950/60 text-neutral-400 border-neutral-800 hover:text-neutral-200 hover:border-neutral-700'
+                }`}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const LayoutControls: React.FC<LayoutControlsProps> = ({
   config,
   onChange,
@@ -32,6 +273,7 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
   onToggleGuides,
 }) => {
   const [openSections, setOpenSections] = useState<string[]>([]);
+  const activePrintSize = getActivePrintSize(config);
 
   const handleTemplateChange = (template: TemplateType) => {
     onChange((prev) => ({
@@ -75,7 +317,11 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              {config.template === 'album-gallery' ? 'Galería' : 'Placa'} • {PRINT_SIZES[config.sizeKey]?.id}
+              {config.template === 'album-gallery'
+                ? 'Galería'
+                : config.template === 'album-classic'
+                ? 'Clásico'
+                : 'Placa'} • {activePrintSize.id === 'custom' ? `${activePrintSize.widthMm / 10} × ${activePrintSize.heightMm / 10} cm` : activePrintSize.name}
             </span>
             <ChevronDown
               className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${
@@ -92,7 +338,7 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
               <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-2">
                 Plantilla de Diseño
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => handleTemplateChange('album-gallery')}
@@ -106,6 +352,22 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                   <div>
                     <div className="text-xs font-bold">Galería Álbum</div>
                     <div className="text-[10px] opacity-70">Tracklist + Suizo</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTemplateChange('album-classic')}
+                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${
+                    config.template === 'album-classic'
+                      ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30 font-medium'
+                      : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+                  }`}
+                >
+                  <LayoutTemplate className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+                  <div>
+                    <div className="text-xs font-bold">Álbum Clásico</div>
+                    <div className="text-[10px] opacity-70">Línea + Metadata</div>
                   </div>
                 </button>
 
@@ -134,17 +396,18 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                   Formato Físico (300 DPI Reales)
                 </label>
                 <span className="text-[10px] text-emerald-400 font-mono font-medium">
-                  {PRINT_SIZES[config.sizeKey]?.widthPx300Dpi} × {PRINT_SIZES[config.sizeKey]?.heightPx300Dpi} px
+                  {activePrintSize.widthPx300Dpi} × {activePrintSize.heightPx300Dpi} px
                 </span>
               </div>
 
+              {/* Presets estándar */}
               <div className="grid grid-cols-1 gap-1.5">
-                {(Object.keys(PRINT_SIZES) as PrintSizeKey[]).map((key) => {
+                {PRESET_PRINT_SIZE_KEYS.map((key) => {
                   const size = PRINT_SIZES[key];
                   const isSelected = config.sizeKey === key;
                   const isSquarer = size.aspectRatioRatio >= 0.74;
 
-                  const usageMap: Record<PrintSizeKey, string> = {
+                  const usageMap: Record<PresetPrintSizeKey, string> = {
                     a5: 'Portarretratos y placas acrílicas',
                     a4: 'Escritorio y diplomas estándar',
                     a3: 'Póster mediano de pared',
@@ -183,7 +446,7 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-neutral-200">{size.name}</span>
                           <span className="text-[9px] font-mono text-neutral-400 font-semibold">
-                            {size.widthMm} × {size.heightMm} mm
+                            {(size.widthMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} × {(size.heightMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} cm
                           </span>
                         </div>
                         <div className="text-[10px] text-neutral-500 truncate mt-0.5">
@@ -193,6 +456,57 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                     </button>
                   );
                 })}
+
+                {/* Opción Tamaño Personalizado */}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange((prev) => ({
+                        ...prev,
+                        sizeKey: 'custom',
+                        customSize: prev.customSize || DEFAULT_CUSTOM_SIZE,
+                      }));
+                    }}
+                    className={`w-full p-2 rounded-lg border text-left transition-all flex items-center gap-2.5 ${
+                      config.sizeKey === 'custom'
+                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30'
+                        : 'border-neutral-800/80 bg-neutral-900/40 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+                    }`}
+                  >
+                    {/* Miniature Custom Icon */}
+                    <div className="w-6 h-8 flex items-center justify-center flex-shrink-0 bg-neutral-950/80 rounded border border-neutral-800 p-0.5">
+                      <Sliders
+                        className={`w-3.5 h-3.5 transition-colors ${
+                          config.sizeKey === 'custom' ? 'text-emerald-400' : 'text-neutral-500'
+                        }`}
+                      />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-neutral-200">Personalizado</span>
+                        <span className="text-[9px] font-mono text-emerald-400 font-semibold">
+                          {config.sizeKey === 'custom'
+                            ? `${(activePrintSize.widthMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} × ${(activePrintSize.heightMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} cm`
+                            : 'A tu medida'}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-neutral-500 truncate mt-0.5">
+                        Elige ancho y alto libre en centímetros
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Panel expandible de controles para tamaño personalizado */}
+                  {config.sizeKey === 'custom' && (
+                    <CustomSizeEditor
+                      config={config}
+                      activePrintSize={activePrintSize}
+                      onChange={onChange}
+                    />
+                  )}
+                </div>
               </div>
             </div>
 

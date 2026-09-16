@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const res = await fetch(imageUrl, {
+      cache: 'no-store',
       headers: {
         'User-Agent': 'Mozilla/5.0 PosterStudio/1.0',
       },

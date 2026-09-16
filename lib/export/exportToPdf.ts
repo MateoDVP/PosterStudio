@@ -55,8 +55,11 @@ export async function exportToPdf(
         : null
   ) as HTMLElement | null;
 
+  const cleanBaseName = filename.endsWith('.pdf') ? filename.replace(/\.pdf$/i, '') : filename;
+  const finalPdfName = `${cleanBaseName}.pdf`;
+
   // --------------------------------------------------------------------------
-  // MÉTODO 1 (PRIMARIO): GENERACIÓN VECTORIAL CON CHROMIUM HEADLESS (PUPPETEER)
+  // MÉTODO 1 (PRIMARIO): PUPPETEER CHROMIUM VECTORIAL ENGINE
   // --------------------------------------------------------------------------
   if (config) {
     try {
@@ -73,14 +76,14 @@ export async function exportToPdf(
           svg: svgString,
           widthMm: printSize.widthMm,
           heightMm: printSize.heightMm,
-          filename: `${filename}-${printSize.id}-vectorial`,
+          filename: cleanBaseName,
         }),
       });
 
       if (response.ok) {
         onProgress?.('Descargando archivo PDF vectorial nativo...');
         const pdfBlob = await response.blob();
-        downloadBlob(pdfBlob, `${filename}-${printSize.id}-vectorial.pdf`);
+        downloadBlob(pdfBlob, finalPdfName);
         onProgress?.('¡Exportación PDF vectorial con Puppeteer completada!');
         return;
       }
@@ -125,7 +128,7 @@ export async function exportToPdf(
       });
 
       onProgress?.('Guardando archivo PDF...');
-      pdf.save(`${filename}-${printSize.id}-vectorial.pdf`);
+      pdf.save(finalPdfName);
       onProgress?.('¡Exportación PDF completada con éxito!');
       return;
     }
@@ -143,7 +146,7 @@ export async function exportToPdf(
       });
 
       pdf.addImage(dataUrl, 'PNG', 0, 0, printSize.widthMm, printSize.heightMm, undefined, 'NONE');
-      pdf.save(`${filename}-${printSize.id}-300dpi.pdf`);
+      pdf.save(finalPdfName);
       onProgress?.('¡Exportación PDF completada!');
     }
   } catch (error) {
@@ -158,7 +161,7 @@ export async function exportToPdf(
         compress: false,
       });
       pdf.addImage(dataUrl, 'PNG', 0, 0, printSize.widthMm, printSize.heightMm, undefined, 'NONE');
-      pdf.save(`${filename}-${printSize.id}-300dpi.pdf`);
+      pdf.save(finalPdfName);
       onProgress?.('¡Exportación PDF completada con respaldo de preprensa!');
       return;
     }

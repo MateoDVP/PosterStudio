@@ -115,17 +115,17 @@ export const AlbumGalleryTemplate: React.FC<AlbumGalleryTemplateProps> = ({
       <div
         className="w-full flex-1 flex justify-between items-stretch gap-2.5 sm:gap-3.5 relative z-10 pt-2.5 sm:pt-3.5 min-h-0"
       >
-        {/* Columna Izquierda: Lista numerada de canciones (54% de ancho para dar holgura a los nombres y evitar cortes innecesarios) */}
-        <div className="w-[54%] max-w-[54%] min-w-0 pr-1">
+        {/* Columna Izquierda: Lista numerada de canciones */}
+        <div className="w-[53%] max-w-[53%] min-w-0 pr-1.5">
           {tracks.length > 0 ? (
-            <div className={`grid ${useTwoColumns ? 'grid-cols-2 gap-x-1.5 sm:gap-x-2' : 'grid-cols-1'} gap-y-[2px]`}>
-              {/* Columna 1 de canciones (se acomoda verticalmente hasta un máximo seguro de 10) */}
-              <div className={tracks.length > 12 ? 'space-y-[2.2px]' : 'space-y-[3px]'}>
+            <div className={`grid ${useTwoColumns ? 'grid-cols-2 gap-x-2 sm:gap-x-3' : 'grid-cols-1'} gap-y-[2px]`}>
+              {/* Columna 1 de canciones */}
+              <div className={tracks.length > 14 ? 'space-y-[3px] sm:space-y-[4px]' : 'space-y-[4.5px] sm:space-y-[6px]'}>
                 {col1Tracks.map((t) => (
                   <div
                     key={t.id}
-                    className={`flex items-start tracking-normal uppercase ${tracks.length > 12 ? 'text-[7px]' : 'text-[8px]'
-                      } leading-[1.2]`}
+                    className={`flex items-start tracking-normal uppercase ${tracks.length > 14 ? 'text-[8.5px] sm:text-[9.5px]' : 'text-[9.5px] sm:text-[11px]'
+                      } leading-[1.25]`}
                     style={{ color: tracklistColor }}
                   >
                     <span className="font-normal mr-1 opacity-60 tabular-nums select-none flex-shrink-0">
@@ -138,14 +138,14 @@ export const AlbumGalleryTemplate: React.FC<AlbumGalleryTemplateProps> = ({
                 ))}
               </div>
 
-              {/* Columna 2 de canciones (excedente de canciones) */}
+              {/* Columna 2 de canciones */}
               {useTwoColumns && (
-                <div className={tracks.length > 12 ? 'space-y-[2.2px]' : 'space-y-[3px]'}>
+                <div className={tracks.length > 14 ? 'space-y-[3px] sm:space-y-[4px]' : 'space-y-[4.5px] sm:space-y-[6px]'}>
                   {col2Tracks.map((t) => (
                     <div
                       key={t.id}
-                      className={`flex items-start tracking-normal uppercase ${tracks.length > 12 ? 'text-[7px]' : 'text-[8px]'
-                        } leading-[1.2]`}
+                      className={`flex items-start tracking-normal uppercase ${tracks.length > 14 ? 'text-[8.5px] sm:text-[9.5px]' : 'text-[9.5px] sm:text-[11px]'
+                        } leading-[1.25]`}
                       style={{ color: tracklistColor }}
                     >
                       <span className="font-normal mr-1 opacity-60 tabular-nums select-none flex-shrink-0">
@@ -160,24 +160,24 @@ export const AlbumGalleryTemplate: React.FC<AlbumGalleryTemplateProps> = ({
               )}
             </div>
           ) : (
-            <div className="text-[9px] text-neutral-400 uppercase tracking-widest pt-1">
+            <div className="text-[10px] text-neutral-400 uppercase tracking-widest pt-1">
               Lista de pistas
             </div>
           )}
         </div>
 
-        {/* Columna Derecha: Información del Álbum (al mismo nivel superior) + Código Spotify abajo */}
-        <div className="w-[46%] max-w-[46%] h-full flex flex-col justify-between items-end text-right flex-shrink-0 pl-1 sm:pl-2">
+        {/* Columna Derecha: Información del Álbum + Código Spotify abajo */}
+        <div className="w-[47%] max-w-[47%] h-full flex flex-col justify-between items-end text-right flex-shrink-0 pl-1.5 sm:pl-2.5">
 
-          {/* Bloque Superior: Al mismo nivel que el inicio de las canciones */}
+          {/* Bloque Superior: Información del Álbum */}
           <div className="w-full flex flex-col items-end text-right">
-            {/* Paleta de Colores del Álbum (5 Cuadros de color sólido sin bordes) */}
+            {/* Paleta de Colores del Álbum (5 Cuadros de color sólido) */}
             {album.showPalette !== false && album.palette && album.palette.length > 0 && (
-              <div className="flex items-center justify-end gap-1 sm:gap-1.5 mb-1.5 sm:mb-2">
+              <div className="flex items-center justify-end gap-1.5 sm:gap-2 mb-2 sm:mb-2.5">
                 {album.palette.slice(0, 5).map((colorHex, idx) => (
                   <div
                     key={`${colorHex}-${idx}`}
-                    className="w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0"
+                    className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0"
                     style={{ backgroundColor: colorHex }}
                   />
                 ))}
@@ -186,7 +186,7 @@ export const AlbumGalleryTemplate: React.FC<AlbumGalleryTemplateProps> = ({
 
             {/* Nombre del Artista */}
             <div
-              className="text-[7.5px] sm:text-[9.5px] font-bold uppercase tracking-[0.2em] mb-0.5"
+              className="text-[9.5px] sm:text-[11.5px] font-bold uppercase tracking-[0.25em] mb-1"
               style={{ color: artistColor }}
             >
               {album.artist || 'ARTISTA'}
@@ -194,24 +194,24 @@ export const AlbumGalleryTemplate: React.FC<AlbumGalleryTemplateProps> = ({
 
             {/* Título Principal del Álbum */}
             <h1
-              className={`font-black tracking-tight leading-[1.05] text-right ${isSquarerFormat
+              className={`font-black tracking-tight leading-[1.04] text-right ${isSquarerFormat
                 ? album.title.length > 20
-                  ? 'text-sm'
-                  : 'text-base sm:text-lg'
+                  ? 'text-base sm:text-lg'
+                  : 'text-lg sm:text-2xl'
                 : album.title.length > 20
-                  ? 'text-lg'
-                  : 'text-xl'
+                  ? 'text-xl sm:text-2xl'
+                  : 'text-2xl sm:text-3xl'
                 } ${album.uppercaseTitle ? 'uppercase' : ''}`}
               style={{ color: titleColor, wordBreak: 'break-word' }}
             >
               {album.title || 'TÍTULO DEL ÁLBUM'}
             </h1>
 
-            {/* Fecha / Año de Lanzamiento (Formato: Septiembre 07, 2026) */}
+            {/* Fecha / Año de Lanzamiento */}
             {album.releaseDate && (
               <div
-                className="text-[7.5px] sm:text-[10px] font-medium tracking-widest mt-1"
-                style={{ color: artistColor, opacity: 0.85 }}
+                className="text-[9px] sm:text-[16px] font-medium tracking-wider mt-1.5"
+                style={{ color: artistColor, opacity: 0.9 }}
               >
                 {formatReleaseDate(album.releaseDate)}
               </div>
@@ -220,8 +220,8 @@ export const AlbumGalleryTemplate: React.FC<AlbumGalleryTemplateProps> = ({
             {/* Duración Total del Álbum */}
             {(album.totalDuration || calculateTotalDurationFromTracks(tracks)) && (
               <div
-                className="text-[7px] sm:text-[9px] font-normal tracking-widest mt-0.5"
-                style={{ color: artistColor, opacity: 0.75 }}
+                className="text-[10px] sm:text-[15px] font-normal mt-0.5"
+                style={{ color: artistColor, opacity: 0.8 }}
               >
                 {album.totalDuration || calculateTotalDurationFromTracks(tracks)}
               </div>

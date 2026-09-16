@@ -27,7 +27,7 @@ export const UrlInputBar: React.FC<UrlInputBarProps> = ({ onDataLoaded, onError 
     setInlineError(null);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second safety timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second safety timeout (allows cold compilation on dev server)
 
     try {
       const res = await fetch(`/api/album?url=${encodeURIComponent(cleanUrl)}`, {

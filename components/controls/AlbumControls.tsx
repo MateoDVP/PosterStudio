@@ -31,6 +31,7 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
 
   const album = config.album;
   const player = config.player;
+  const isAlbum = config.template === 'album-gallery' || config.template === 'album-classic';
 
   const updateAlbum = (partial: Partial<typeof album>) => {
     onChange((prev) => ({
@@ -60,7 +61,7 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
     reader.onload = (event) => {
       const base64 = event.target?.result as string;
       if (base64) {
-        if (config.template === 'album-gallery') {
+        if (isAlbum) {
           updateAlbum({ coverUrl: base64 });
         } else {
           updatePlayer({ coverUrl: base64 });
@@ -97,27 +98,24 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
   };
 
   // Current cover info
-  const activeCoverUrl = config.template === 'album-gallery' ? album.coverUrl : player.coverUrl;
-  const activeItunesUrl =
-    config.template === 'album-gallery' ? album.itunesCoverUrl : player.itunesCoverUrl;
-  const activeSpotifyUrl =
-    config.template === 'album-gallery' ? album.spotifyCoverUrl : player.spotifyCoverUrl;
+  const activeCoverUrl = isAlbum ? album.coverUrl : player.coverUrl;
+  const activeItunesUrl = isAlbum ? album.itunesCoverUrl : player.itunesCoverUrl;
+  const activeSpotifyUrl = isAlbum ? album.spotifyCoverUrl : player.spotifyCoverUrl;
 
   const handleSelectOfficialCover = (url: string) => {
-    if (config.template === 'album-gallery') {
+    if (isAlbum) {
       updateAlbum({ coverUrl: url });
     } else {
       updatePlayer({ coverUrl: url });
     }
   };
 
-  const activeSoundwaveColor =
-    config.template === 'album-gallery'
-      ? album.soundwaveColor || '#000000'
-      : player.soundwaveColor || '#000000';
+  const activeSoundwaveColor = isAlbum
+    ? album.soundwaveColor || '#000000'
+    : player.soundwaveColor || '#000000';
 
   const handleSoundwaveColor = (color: string) => {
-    if (config.template === 'album-gallery') {
+    if (isAlbum) {
       updateAlbum({ soundwaveColor: color });
     } else {
       updatePlayer({ soundwaveColor: color });
@@ -279,7 +277,7 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                     placeholder="O pega URL de imagen..."
                     value={activeCoverUrl?.startsWith('data:') ? 'Imagen local cargada' : activeCoverUrl || ''}
                     onChange={(e) => {
-                      if (config.template === 'album-gallery') {
+                      if (isAlbum) {
                         updateAlbum({ coverUrl: e.target.value });
                       } else {
                         updatePlayer({ coverUrl: e.target.value });
@@ -347,14 +345,14 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
             {/* Título */}
             <div>
               <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
-                {config.template === 'album-gallery' ? 'Título del Álbum' : 'Título de la Canción'}
+                {isAlbum ? 'Título del Álbum' : 'Título de la Canción'}
               </label>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  value={config.template === 'album-gallery' ? album.title : player.title}
+                  value={isAlbum ? album.title : player.title}
                   onChange={(e) => {
-                    if (config.template === 'album-gallery') {
+                    if (isAlbum) {
                       updateAlbum({ title: e.target.value });
                     } else {
                       updatePlayer({ title: e.target.value });
@@ -365,12 +363,12 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                 <ColorPickerPopover
                   title="Color del Título"
                   color={
-                    config.template === 'album-gallery'
+                    isAlbum
                       ? album.titleColor || '#000000'
                       : player.titleColor || '#000000'
                   }
                   onChange={(c) => {
-                    if (config.template === 'album-gallery') {
+                    if (isAlbum) {
                       updateAlbum({ titleColor: c });
                     } else {
                       updatePlayer({ titleColor: c });
@@ -381,7 +379,7 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
             </div>
 
             {/* Uppercase Switch (para Álbum) */}
-            {config.template === 'album-gallery' && (
+            {isAlbum && (
               <div className="flex items-center justify-between">
                 <span className="text-xs text-neutral-400">Mayúsculas en Título (Uppercase)</span>
                 <input
@@ -401,9 +399,9 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
               <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  value={config.template === 'album-gallery' ? album.artist : player.artist}
+                  value={isAlbum ? album.artist : player.artist}
                   onChange={(e) => {
-                    if (config.template === 'album-gallery') {
+                    if (isAlbum) {
                       updateAlbum({ artist: e.target.value });
                     } else {
                       updatePlayer({ artist: e.target.value });
@@ -414,12 +412,12 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                 <ColorPickerPopover
                   title="Color del Artista"
                   color={
-                    config.template === 'album-gallery'
+                    isAlbum
                       ? album.artistColor || album.titleColor || '#404040'
                       : player.artistColor || '#737373'
                   }
                   onChange={(c) => {
-                    if (config.template === 'album-gallery') {
+                    if (isAlbum) {
                       updateAlbum({ artistColor: c });
                     } else {
                       updatePlayer({ artistColor: c });
@@ -430,7 +428,7 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
             </div>
 
             {/* Fecha / Año y Duración */}
-            {config.template === 'album-gallery' && (
+            {isAlbum && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
@@ -511,9 +509,9 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
       </Accordion.Item>
 
       {/* ========================================================================= */}
-      {/* SECCIÓN 3: PISTAS & TRACKLIST (solo en Galería Álbum) */}
+      {/* SECCIÓN 3: PISTAS & TRACKLIST */}
       {/* ========================================================================= */}
-      {config.template === 'album-gallery' && (
+      {isAlbum && (
         <Accordion.Item value="pistas" className="border-none">
           <Accordion.ItemTrigger className="w-full px-4 py-3 flex items-center justify-between hover:bg-neutral-850/50 transition-colors cursor-pointer group text-left">
             <div className="flex items-center gap-2.5">

@@ -2,13 +2,14 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { PosterConfig } from '@/types/poster';
-import { PRINT_SIZES, DEFAULT_PRINT_SIZE } from '@/lib/constants/printSizes';
+import { DEFAULT_PRINT_SIZE, DEFAULT_CUSTOM_SIZE, getActivePrintSize } from '@/lib/constants/printSizes';
 import { PosterRenderer } from '@/components/poster/PosterRenderer';
 import { SidebarInspector } from '@/components/controls/SidebarInspector';
 import { UrlInputBar } from '@/components/ui/UrlInputBar';
 import { exportToPng } from '@/lib/export/exportToPng';
 import { exportToPdf } from '@/lib/export/exportToPdf';
 import { exportToSvg } from '@/lib/export/exportToSvg';
+import { getExportBaseFileName } from '@/lib/export/exportFileName';
 import { extractPaletteFromImage, DEFAULT_PALETTE } from '@/lib/colorPalette';
 import { formatReleaseDate, calculateTotalDurationFromTracks } from '@/lib/spotify';
 import {
@@ -24,6 +25,7 @@ import {
 const INITIAL_POSTER_CONFIG: PosterConfig = {
   template: 'album-gallery',
   sizeKey: DEFAULT_PRINT_SIZE,
+  customSize: DEFAULT_CUSTOM_SIZE,
   backgroundColor: '#FFFFFF',
   textColor: '#000000',
   accentColor: '#1DB954',
@@ -72,12 +74,12 @@ export default function PosterStudioPage() {
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const posterRef = useRef<HTMLDivElement>(null);
-  const activePrintSize = PRINT_SIZES[config.sizeKey];
+  const activePrintSize = getActivePrintSize(config);
 
   // Extraer paleta de 5 colores automáticamente cuando cambia la portada
   useEffect(() => {
     const activeCover =
-      config.template === 'album-gallery'
+      config.template === 'album-gallery' || config.template === 'album-classic'
         ? config.album.coverUrl
         : config.player.coverUrl || config.album.coverUrl;
 
@@ -119,7 +121,7 @@ export default function PosterStudioPage() {
         const defaultCover = data.itunesCoverUrl || data.coverUrl || data.spotifyCoverUrl || prev.album.coverUrl;
         return {
           ...prev,
-          template: 'album-gallery',
+          template: prev.template === 'album-classic' ? 'album-classic' : 'album-gallery',
           album: {
             ...prev.album,
             title: data.title || prev.album.title,
@@ -168,10 +170,11 @@ export default function PosterStudioPage() {
     if (!posterRef.current) return;
     setExporting(true);
     try {
+      const baseFilename = getExportBaseFileName(config, activePrintSize);
       await exportToPng(
         posterRef.current,
         activePrintSize,
-        `poster-${config.template}`,
+        baseFilename,
         (status) => setExportStatus(status)
       );
       showNotification('Póster PNG a 300 DPI descargado con éxito', 'success');
@@ -187,10 +190,11 @@ export default function PosterStudioPage() {
   const handleExportSvg = async () => {
     setExporting(true);
     try {
+      const baseFilename = getExportBaseFileName(config, activePrintSize);
       await exportToSvg(
         config,
         activePrintSize,
-        `poster-${config.template}`,
+        baseFilename,
         (status) => setExportStatus(status)
       );
       showNotification('Póster SVG vectorial editable para Illustrator descargado', 'success');
@@ -206,10 +210,11 @@ export default function PosterStudioPage() {
   const handleExportPdf = async () => {
     setExporting(true);
     try {
+      const baseFilename = getExportBaseFileName(config, activePrintSize);
       await exportToPdf(
         config,
         activePrintSize,
-        `poster-${config.template}`,
+        baseFilename,
         (status) => setExportStatus(status),
         posterRef.current
       );

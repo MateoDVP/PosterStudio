@@ -1,9 +1,15 @@
-export type PrintSizeKey = 'a5' | 'a4' | 'a3' | '30x40' | '50x70';
+export type PresetPrintSizeKey = 'a5' | 'a4' | 'a3' | '30x40' | '50x70';
+export type PrintSizeKey = PresetPrintSizeKey | 'custom';
+
+export interface CustomSizeConfig {
+  widthCm: number;
+  heightCm: number;
+}
 
 export interface PrintSize {
   id: PrintSizeKey;
   name: string;
-  category: 'ISO Standard' | 'Poster Art';
+  category: 'ISO Standard' | 'Poster Art' | 'Personalizado';
   widthMm: number;
   heightMm: number;
   widthPx300Dpi: number;
@@ -12,7 +18,7 @@ export interface PrintSize {
   aspectRatioRatio: number; // width / height
 }
 
-export type TemplateType = 'album-gallery' | 'song-player';
+export type TemplateType = 'album-gallery' | 'song-player' | 'album-classic';
 
 export interface TrackItem {
   id: string;
@@ -66,6 +72,7 @@ export interface PlayerData {
 export interface PosterConfig {
   template: TemplateType;
   sizeKey: PrintSizeKey;
+  customSize?: CustomSizeConfig;
   backgroundColor: string; // default "#FFFFFF"
   textColor: string; // default "#000000"
   accentColor: string; // default "#1DB954" (Spotify green) or album dominant
