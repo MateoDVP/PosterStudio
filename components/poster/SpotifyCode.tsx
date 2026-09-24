@@ -50,12 +50,12 @@ export const SpotifyCode: React.FC<SpotifyCodeProps> = ({
           .replace(/fill="#000000"/gi, 'fill="currentColor"')
           .replace(/fill="black"/gi, 'fill="currentColor"');
 
-        // 3. Hacer que el SVG escale proporcionalmente a la altura de su contenedor
+        // 3. Hacer que el SVG escale proporcionalmente a la altura y ancho de su contenedor
         svgText = svgText.replace(
           /<svg\s+([^>]*)>/i,
           (_match, attrs) => {
             const cleanAttrs = attrs.replace(/\b(width|height)="[^"]*"/gi, '').trim();
-            return `<svg ${cleanAttrs} style="width: auto; height: 100%; max-height: 100%; display: block;" preserveAspectRatio="xMidYMid meet">`;
+            return `<svg ${cleanAttrs} style="width: 100%; height: 100%; display: block;" preserveAspectRatio="xMidYMid meet">`;
           }
         );
 
@@ -90,7 +90,7 @@ export const SpotifyCode: React.FC<SpotifyCodeProps> = ({
   return (
     <div
       className={className}
-      style={{ color, display: 'inline-flex', alignItems: 'center' }}
+      style={{ color, display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end' }}
       dangerouslySetInnerHTML={{ __html: svgContent }}
     />
   );

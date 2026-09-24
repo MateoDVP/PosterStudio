@@ -158,9 +158,8 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
               )
             ) : null}
             <ChevronDown
-              className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${
-                openSections.includes('caratula') ? 'rotate-180' : ''
-              }`}
+              className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${openSections.includes('caratula') ? 'rotate-180' : ''
+                }`}
             />
           </div>
         </Accordion.ItemTrigger>
@@ -179,13 +178,12 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                     type="button"
                     disabled={!activeItunesUrl}
                     onClick={() => activeItunesUrl && handleSelectOfficialCover(activeItunesUrl)}
-                    className={`p-2 rounded-xl border text-left flex items-center gap-2 transition-all ${
-                      activeCoverUrl === activeItunesUrl
+                    className={`p-2 rounded-xl border text-left flex items-center gap-2 transition-all ${activeCoverUrl === activeItunesUrl
                         ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/40 shadow-sm'
                         : activeItunesUrl
-                        ? 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                        : 'border-neutral-900 bg-neutral-950/40 text-neutral-600 opacity-50 cursor-not-allowed'
-                    }`}
+                          ? 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+                          : 'border-neutral-900 bg-neutral-950/40 text-neutral-600 opacity-50 cursor-not-allowed'
+                      }`}
                   >
                     <div className="w-8 h-8 rounded-lg bg-neutral-950 flex-shrink-0 overflow-hidden border border-neutral-800">
                       {activeItunesUrl ? (
@@ -208,13 +206,12 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                     type="button"
                     disabled={!activeSpotifyUrl}
                     onClick={() => activeSpotifyUrl && handleSelectOfficialCover(activeSpotifyUrl)}
-                    className={`p-2 rounded-xl border text-left flex items-center gap-2 transition-all ${
-                      activeCoverUrl === activeSpotifyUrl
+                    className={`p-2 rounded-xl border text-left flex items-center gap-2 transition-all ${activeCoverUrl === activeSpotifyUrl
                         ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/40 shadow-sm'
                         : activeSpotifyUrl
-                        ? 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                        : 'border-neutral-900 bg-neutral-950/40 text-neutral-600 opacity-50 cursor-not-allowed'
-                    }`}
+                          ? 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+                          : 'border-neutral-900 bg-neutral-950/40 text-neutral-600 opacity-50 cursor-not-allowed'
+                      }`}
                   >
                     <div className="w-8 h-8 rounded-lg bg-neutral-950 flex-shrink-0 overflow-hidden border border-neutral-800">
                       {activeSpotifyUrl ? (
@@ -246,9 +243,8 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                     <img
                       src={activeCoverUrl}
                       alt="Cover preview"
-                      className={`w-full h-full object-cover ${
-                        config.template === 'song-player' && player.isBlackAndWhite ? 'grayscale' : ''
-                      }`}
+                      className={`w-full h-full object-cover ${config.template === 'song-player' && player.isBlackAndWhite ? 'grayscale' : ''
+                        }`}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-neutral-600">
@@ -334,9 +330,8 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
             </span>
           </div>
           <ChevronDown
-            className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${
-              openSections.includes('tipografia') ? 'rotate-180' : ''
-            }`}
+            className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${openSections.includes('tipografia') ? 'rotate-180' : ''
+              }`}
           />
         </Accordion.ItemTrigger>
 
@@ -375,6 +370,97 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                     }
                   }}
                 />
+              </div>
+            </div>
+
+            {/* Control numérico de Tamaño del Título (px) */}
+            <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-lg p-2.5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium text-neutral-300">
+                  Tamaño del Título
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min={12}
+                    max={72}
+                    value={
+                      isAlbum
+                        ? (album.titleFontSize ?? (config.template === 'album-classic' ? 26 : 24))
+                        : (player.titleFontSize ?? 18)
+                    }
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val)) {
+                        const clamped = Math.max(10, Math.min(80, val));
+                        if (isAlbum) {
+                          updateAlbum({ titleFontSize: clamped });
+                        } else {
+                          updatePlayer({ titleFontSize: clamped });
+                        }
+                      }
+                    }}
+                    className="w-14 bg-neutral-950 border border-neutral-700/80 rounded px-1.5 py-0.5 text-right font-mono text-xs text-emerald-400 font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                  <span className="text-[10px] text-neutral-500 font-mono">px</span>
+                </div>
+              </div>
+
+              {/* Slider interactivo */}
+              <input
+                type="range"
+                min="14"
+                max="60"
+                step="1"
+                value={
+                  isAlbum
+                    ? (album.titleFontSize ?? (config.template === 'album-classic' ? 26 : 24))
+                    : (player.titleFontSize ?? 18)
+                }
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (isAlbum) {
+                    updateAlbum({ titleFontSize: val });
+                  } else {
+                    updatePlayer({ titleFontSize: val });
+                  }
+                }}
+                className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-neutral-800 rounded-lg appearance-none"
+              />
+
+              {/* Atajos rápidos en px */}
+              <div className="flex items-center justify-between gap-1 pt-0.5">
+                {[
+                  { label: 'Normal', size: 20 },
+                  { label: 'Medio', size: 26 },
+                  { label: 'Grande', size: 32 },
+                  { label: 'Extra', size: 40 },
+                ].map((preset) => {
+                  const currentSize = isAlbum
+                    ? (album.titleFontSize ?? (config.template === 'album-classic' ? 26 : 24))
+                    : (player.titleFontSize ?? 18);
+                  const isSelected = currentSize === preset.size;
+
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => {
+                        if (isAlbum) {
+                          updateAlbum({ titleFontSize: preset.size });
+                        } else {
+                          updatePlayer({ titleFontSize: preset.size });
+                        }
+                      }}
+                      className={`text-[9.5px] px-2 py-0.5 rounded border transition-colors ${isSelected
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
+                          : 'bg-neutral-950/40 text-neutral-400 border-neutral-800 hover:text-neutral-200'
+                        }`}
+                    >
+                      {preset.label} ({preset.size})
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -427,32 +513,209 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
               </div>
             </div>
 
-            {/* Fecha / Año y Duración */}
+            {/* Control numérico de Tamaño del Artista (px) */}
+            <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-lg p-2.5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium text-neutral-300">
+                  Tamaño del Artista
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min={8}
+                    max={40}
+                    value={
+                      isAlbum
+                        ? (album.artistFontSize ?? 14)
+                        : (player.artistFontSize ?? 13)
+                    }
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val)) {
+                        const clamped = Math.max(6, Math.min(50, val));
+                        if (isAlbum) {
+                          updateAlbum({ artistFontSize: clamped });
+                        } else {
+                          updatePlayer({ artistFontSize: clamped });
+                        }
+                      }
+                    }}
+                    className="w-14 bg-neutral-950 border border-neutral-700/80 rounded px-1.5 py-0.5 text-right font-mono text-xs text-emerald-400 font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                  <span className="text-[10px] text-neutral-500 font-mono">px</span>
+                </div>
+              </div>
+
+              {/* Slider interactivo */}
+              <input
+                type="range"
+                min="8"
+                max="36"
+                step="1"
+                value={
+                  isAlbum
+                    ? (album.artistFontSize ?? 14)
+                    : (player.artistFontSize ?? 13)
+                }
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (isAlbum) {
+                    updateAlbum({ artistFontSize: val });
+                  } else {
+                    updatePlayer({ artistFontSize: val });
+                  }
+                }}
+                className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-neutral-800 rounded-lg appearance-none"
+              />
+
+              {/* Atajos rápidos en px */}
+              <div className="flex items-center justify-between gap-1 pt-0.5">
+                {[
+                  { label: 'Sutil', size: 11 },
+                  { label: 'Normal', size: 14 },
+                  { label: 'Medio', size: 18 },
+                  { label: 'Grande', size: 24 },
+                ].map((preset) => {
+                  const currentSize = isAlbum
+                    ? (album.artistFontSize ?? 14)
+                    : (player.artistFontSize ?? 13);
+                  const isSelected = currentSize === preset.size;
+
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => {
+                        if (isAlbum) {
+                          updateAlbum({ artistFontSize: preset.size });
+                        } else {
+                          updatePlayer({ artistFontSize: preset.size });
+                        }
+                      }}
+                      className={`text-[9.5px] px-2 py-0.5 rounded border transition-colors ${isSelected
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
+                          : 'bg-neutral-950/40 text-neutral-400 border-neutral-800 hover:text-neutral-200'
+                        }`}
+                    >
+                      {preset.label} ({preset.size})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Fecha / Año y Duración con Colores Independientes */}
             {isAlbum && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="space-y-3 pt-1">
+                {/* Fecha de Lanzamiento */}
                 <div>
                   <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
                     Fecha de Lanzamiento
                   </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Septiembre 07, 2026"
-                    value={album.releaseDate}
-                    onChange={(e) => updateAlbum({ releaseDate: e.target.value })}
-                    className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-emerald-500"
-                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. Septiembre 07, 2026"
+                      value={album.releaseDate}
+                      onChange={(e) => updateAlbum({ releaseDate: e.target.value })}
+                      className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-emerald-500"
+                    />
+                    <ColorPickerPopover
+                      title="Color de Fecha de Lanzamiento"
+                      color={album.releaseDateColor || album.titleColor || '#000000'}
+                      onChange={(c) => updateAlbum({ releaseDateColor: c })}
+                    />
+                  </div>
                 </div>
+
+                {/* Duración del Álbum */}
                 <div>
                   <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
                     Duración del Álbum
                   </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. 54 min 20 seg o 1 h 14 min"
+                      value={album.totalDuration || ''}
+                      onChange={(e) => updateAlbum({ totalDuration: e.target.value })}
+                      className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-emerald-500"
+                    />
+                    <ColorPickerPopover
+                      title="Color de Duración del Álbum"
+                      color={album.durationColor || album.titleColor || '#000000'}
+                      onChange={(c) => updateAlbum({ durationColor: c })}
+                    />
+                  </div>
+                </div>
+
+                {/* Control numérico de Tamaño de Fecha y Duración (Metadatos) */}
+                <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-lg p-2.5 space-y-2 mt-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-medium text-neutral-300">
+                        Tamaño de Fecha y Duración
+                      </span>
+                      <p className="text-[9.5px] text-neutral-500">
+                        El título (Release Date) se ajusta proporcionalmente
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min={7}
+                        max={26}
+                        value={album.metadataFontSize ?? 12}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val)) {
+                            const clamped = Math.max(7, Math.min(30, val));
+                            updateAlbum({ metadataFontSize: clamped });
+                          }
+                        }}
+                        className="w-14 bg-neutral-950 border border-neutral-700/80 rounded px-1.5 py-0.5 text-right font-mono text-xs text-emerald-400 font-bold focus:outline-none focus:border-emerald-500"
+                      />
+                      <span className="text-[10px] text-neutral-500 font-mono">px</span>
+                    </div>
+                  </div>
+
+                  {/* Slider interactivo */}
                   <input
-                    type="text"
-                    placeholder="e.g. 54 min 20 seg o 1 h 14 min"
-                    value={album.totalDuration || ''}
-                    onChange={(e) => updateAlbum({ totalDuration: e.target.value })}
-                    className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-emerald-500"
+                    type="range"
+                    min="8"
+                    max="22"
+                    step="1"
+                    value={album.metadataFontSize ?? 12}
+                    onChange={(e) => updateAlbum({ metadataFontSize: Number(e.target.value) })}
+                    className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-neutral-800 rounded-lg appearance-none"
                   />
+
+                  {/* Atajos rápidos en px */}
+                  <div className="flex items-center justify-between gap-1 pt-0.5">
+                    {[
+                      { label: 'Compacto', size: 10 },
+                      { label: 'Normal', size: 12 },
+                      { label: 'Medio', size: 15 },
+                      { label: 'Grande', size: 18 },
+                    ].map((preset) => {
+                      const currentSize = album.metadataFontSize ?? 12;
+                      const isSelected = currentSize === preset.size;
+
+                      return (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => updateAlbum({ metadataFontSize: preset.size })}
+                          className={`text-[9.5px] px-2 py-0.5 rounded border transition-colors ${isSelected
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
+                              : 'bg-neutral-950/40 text-neutral-400 border-neutral-800 hover:text-neutral-200'
+                            }`}
+                        >
+                          {preset.label} ({preset.size}px)
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
@@ -503,6 +766,114 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                     ))}
                 </div>
               )}
+
+              {/* Control numérico y slider de Tamaño de la Paleta */}
+              {((config.template === 'song-player' ? player.showPalette !== false : album.showPalette !== false)) && (
+                <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-lg p-2.5 space-y-2 mt-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-medium text-neutral-300">
+                        {config.template === 'song-player' ? 'Altura de la Paleta' : 'Tamaño de los Cuadros de Color'}
+                      </span>
+                      <p className="text-[9.5px] text-neutral-500">
+                        {config.template === 'song-player' ? 'Grosor de las franjas al pie' : 'Escala de las muestras de color'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min={config.template === 'song-player' ? 6 : 14}
+                        max={config.template === 'song-player' ? 36 : 60}
+                        value={
+                          config.template === 'song-player'
+                            ? (player.paletteSize ?? 14)
+                            : (album.paletteSize ?? 32)
+                        }
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val)) {
+                            const minVal = config.template === 'song-player' ? 6 : 12;
+                            const maxVal = config.template === 'song-player' ? 40 : 70;
+                            const clamped = Math.max(minVal, Math.min(maxVal, val));
+                            if (config.template === 'song-player') {
+                              updatePlayer({ paletteSize: clamped });
+                            } else {
+                              updateAlbum({ paletteSize: clamped });
+                            }
+                          }
+                        }}
+                        className="w-14 bg-neutral-950 border border-neutral-700/80 rounded px-1.5 py-0.5 text-right font-mono text-xs text-emerald-400 font-bold focus:outline-none focus:border-emerald-500"
+                      />
+                      <span className="text-[10px] text-neutral-500 font-mono">px</span>
+                    </div>
+                  </div>
+
+                  {/* Slider interactivo */}
+                  <input
+                    type="range"
+                    min={config.template === 'song-player' ? 6 : 14}
+                    max={config.template === 'song-player' ? 32 : 54}
+                    step="1"
+                    value={
+                      config.template === 'song-player'
+                        ? (player.paletteSize ?? 14)
+                        : (album.paletteSize ?? 32)
+                    }
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      if (config.template === 'song-player') {
+                        updatePlayer({ paletteSize: val });
+                      } else {
+                        updateAlbum({ paletteSize: val });
+                      }
+                    }}
+                    className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-neutral-800 rounded-lg appearance-none"
+                  />
+
+                  {/* Atajos rápidos en px */}
+                  <div className="flex items-center justify-between gap-1 pt-0.5">
+                    {(config.template === 'song-player'
+                      ? [
+                          { label: 'Fino', size: 10 },
+                          { label: 'Normal', size: 14 },
+                          { label: 'Medio', size: 18 },
+                          { label: 'Grueso', size: 24 },
+                        ]
+                      : [
+                          { label: 'Compacto', size: 18 },
+                          { label: 'Normal', size: 24 },
+                          { label: 'Medio', size: 32 },
+                          { label: 'Grande', size: 42 },
+                        ]
+                    ).map((preset) => {
+                      const currentSize = config.template === 'song-player'
+                        ? (player.paletteSize ?? 14)
+                        : (album.paletteSize ?? 32);
+                      const isSelected = currentSize === preset.size;
+
+                      return (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => {
+                            if (config.template === 'song-player') {
+                              updatePlayer({ paletteSize: preset.size });
+                            } else {
+                              updateAlbum({ paletteSize: preset.size });
+                            }
+                          }}
+                          className={`text-[9.5px] px-2 py-0.5 rounded border transition-colors ${isSelected
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
+                              : 'bg-neutral-950/40 text-neutral-400 border-neutral-800 hover:text-neutral-200'
+                            }`}
+                        >
+                          {preset.label} ({preset.size}px)
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </Accordion.ItemBody>
         </Accordion.ItemContent>
@@ -525,9 +896,8 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                 {album.tracks.length} pistas
               </span>
               <ChevronDown
-                className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${
-                  openSections.includes('pistas') ? 'rotate-180' : ''
-                }`}
+                className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${openSections.includes('pistas') ? 'rotate-180' : ''
+                  }`}
               />
             </div>
           </Accordion.ItemTrigger>
@@ -541,22 +911,20 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                   <button
                     type="button"
                     onClick={() => updateAlbum({ trackColumns: 1 })}
-                    className={`px-2 py-1 text-[11px] rounded border transition-colors ${
-                      album.trackColumns === 1
+                    className={`px-2 py-1 text-[11px] rounded border transition-colors ${album.trackColumns === 1
                         ? 'bg-neutral-800 border-emerald-500 text-emerald-400 font-semibold'
                         : 'bg-transparent border-neutral-800 text-neutral-400 hover:text-neutral-200'
-                    }`}
+                      }`}
                   >
                     1 Columna
                   </button>
                   <button
                     type="button"
                     onClick={() => updateAlbum({ trackColumns: 2 })}
-                    className={`px-2 py-1 text-[11px] rounded border transition-colors ${
-                      album.trackColumns === 2
+                    className={`px-2 py-1 text-[11px] rounded border transition-colors ${album.trackColumns === 2
                         ? 'bg-neutral-800 border-emerald-500 text-emerald-400 font-semibold'
                         : 'bg-transparent border-neutral-800 text-neutral-400 hover:text-neutral-200'
-                    }`}
+                      }`}
                   >
                     2 Columnas
                   </button>
@@ -569,6 +937,138 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                     color={album.tracklistColor || '#000000'}
                     onChange={(c) => updateAlbum({ tracklistColor: c })}
                   />
+                </div>
+              </div>
+
+              {/* Distribución personalizada de canciones por columna (Bloque 1 y Bloque 2) */}
+              {album.trackColumns === 2 && album.tracks && album.tracks.length > 1 && (() => {
+                const totalTracks = album.tracks.length;
+                const defaultHalf = Math.ceil(totalTracks / 2);
+                const currentCol1 = (album.col1TrackCount !== undefined && album.col1TrackCount > 0 && album.col1TrackCount < totalTracks)
+                  ? album.col1TrackCount
+                  : defaultHalf;
+                const currentCol2 = totalTracks - currentCol1;
+
+                return (
+                  <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-lg p-2.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-medium text-neutral-300">
+                        Canciones por Columna
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => updateAlbum({ col1TrackCount: undefined })}
+                        className="text-[10px] text-neutral-400 hover:text-emerald-400 transition-colors"
+                        title="Restablecer a 50/50 equilibrado"
+                      >
+                        Auto (50/50)
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] bg-neutral-950/70 px-2.5 py-1.5 rounded border border-neutral-800/60">
+                      <span className="text-emerald-400 font-semibold">
+                        Bloque 1: {currentCol1} {currentCol1 === 1 ? 'canción' : 'canciones'}
+                      </span>
+                      <span className="text-neutral-600">|</span>
+                      <span className="text-emerald-400 font-semibold">
+                        Bloque 2: {currentCol2} {currentCol2 === 1 ? 'canción' : 'canciones'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => updateAlbum({ col1TrackCount: Math.max(1, currentCol1 - 1) })}
+                        disabled={currentCol1 <= 1}
+                        className="w-6 h-6 rounded bg-neutral-800 hover:bg-neutral-700 disabled:opacity-30 disabled:hover:bg-neutral-800 text-neutral-200 flex items-center justify-center font-bold text-xs transition-colors"
+                        title="Menos en Bloque 1"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="range"
+                        min={1}
+                        max={totalTracks - 1}
+                        step={1}
+                        value={currentCol1}
+                        onChange={(e) => updateAlbum({ col1TrackCount: parseInt(e.target.value, 10) })}
+                        className="flex-1 accent-emerald-500 cursor-pointer h-1.5 bg-neutral-800 rounded-lg appearance-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateAlbum({ col1TrackCount: Math.min(totalTracks - 1, currentCol1 + 1) })}
+                        disabled={currentCol1 >= totalTracks - 1}
+                        className="w-6 h-6 rounded bg-neutral-800 hover:bg-neutral-700 disabled:opacity-30 disabled:hover:bg-neutral-800 text-neutral-200 flex items-center justify-center font-bold text-xs transition-colors"
+                        title="Más en Bloque 1"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Control numérico de Tamaño del Tracklist (px) */}
+              <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-lg p-2.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-medium text-neutral-300">
+                    Tamaño de Canciones (Tracklist)
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      min={8}
+                      max={26}
+                      value={album.tracklistFontSize ?? 13}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val)) {
+                          const clamped = Math.max(7, Math.min(32, val));
+                          updateAlbum({ tracklistFontSize: clamped });
+                        }
+                      }}
+                      className="w-14 bg-neutral-950 border border-neutral-700/80 rounded px-1.5 py-0.5 text-right font-mono text-xs text-emerald-400 font-bold focus:outline-none focus:border-emerald-500"
+                    />
+                    <span className="text-[10px] text-neutral-500 font-mono">px</span>
+                  </div>
+                </div>
+
+                {/* Slider interactivo */}
+                <input
+                  type="range"
+                  min="9"
+                  max="24"
+                  step="1"
+                  value={album.tracklistFontSize ?? 13}
+                  onChange={(e) => updateAlbum({ tracklistFontSize: Number(e.target.value) })}
+                  className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-neutral-800 rounded-lg appearance-none"
+                />
+
+                {/* Atajos rápidos en px */}
+                <div className="flex items-center justify-between gap-1 pt-0.5">
+                  {[
+                    { label: 'Compacto', size: 10 },
+                    { label: 'Normal', size: 13 },
+                    { label: 'Medio', size: 15 },
+                    { label: 'Grande', size: 18 },
+                  ].map((preset) => {
+                    const currentSize = album.tracklistFontSize ?? 13;
+                    const isSelected = currentSize === preset.size;
+
+                    return (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => updateAlbum({ tracklistFontSize: preset.size })}
+                        className={`text-[9.5px] px-2 py-0.5 rounded border transition-colors ${isSelected
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
+                            : 'bg-neutral-950/40 text-neutral-400 border-neutral-800 hover:text-neutral-200'
+                          }`}
+                      >
+                        {preset.label} ({preset.size}px)
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -634,9 +1134,8 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
               title={`Color de código: ${activeSoundwaveColor}`}
             />
             <ChevronDown
-              className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${
-                openSections.includes('reproductor') ? 'rotate-180' : ''
-              }`}
+              className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${openSections.includes('reproductor') ? 'rotate-180' : ''
+                }`}
             />
           </div>
         </Accordion.ItemTrigger>
@@ -665,6 +1164,102 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
               />
             </div>
 
+            {/* Control manual de Tamaño del Código Spotify */}
+            <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-lg p-2.5 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-medium text-neutral-300">
+                    Tamaño del Código Spotify
+                  </span>
+                  <p className="text-[9.5px] text-neutral-500">
+                    Altura y proporción del código escaneable
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min={14}
+                    max={60}
+                    value={
+                      isAlbum
+                        ? (album.spotifyCodeSize ?? 30)
+                        : (player.spotifyCodeSize ?? 42)
+                    }
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val)) {
+                        const clamped = Math.max(12, Math.min(70, val));
+                        if (isAlbum) {
+                          updateAlbum({ spotifyCodeSize: clamped });
+                        } else {
+                          updatePlayer({ spotifyCodeSize: clamped });
+                        }
+                      }
+                    }}
+                    className="w-14 bg-neutral-950 border border-neutral-700/80 rounded px-1.5 py-0.5 text-right font-mono text-xs text-emerald-400 font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                  <span className="text-[10px] text-neutral-500 font-mono">px</span>
+                </div>
+              </div>
+
+              {/* Slider interactivo */}
+              <input
+                type="range"
+                min="14"
+                max="56"
+                step="1"
+                value={
+                  isAlbum
+                    ? (album.spotifyCodeSize ?? 30)
+                    : (player.spotifyCodeSize ?? 42)
+                }
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (isAlbum) {
+                    updateAlbum({ spotifyCodeSize: val });
+                  } else {
+                    updatePlayer({ spotifyCodeSize: val });
+                  }
+                }}
+                className="w-full accent-emerald-500 cursor-pointer h-1.5 bg-neutral-800 rounded-lg appearance-none"
+              />
+
+              {/* Atajos rápidos en px */}
+              <div className="flex items-center justify-between gap-1 pt-0.5">
+                {[
+                  { label: 'Mini', size: 18 },
+                  { label: 'Normal', size: 24 },
+                  { label: 'Medio', size: 30 },
+                  { label: 'Grande', size: 38 },
+                ].map((preset) => {
+                  const currentSize = isAlbum
+                    ? (album.spotifyCodeSize ?? 30)
+                    : (player.spotifyCodeSize ?? 42);
+                  const isSelected = currentSize === preset.size;
+
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => {
+                        if (isAlbum) {
+                          updateAlbum({ spotifyCodeSize: preset.size });
+                        } else {
+                          updatePlayer({ spotifyCodeSize: preset.size });
+                        }
+                      }}
+                      className={`text-[9.5px] px-2 py-0.5 rounded border transition-colors ${isSelected
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
+                          : 'bg-neutral-950/40 text-neutral-400 border-neutral-800 hover:text-neutral-200'
+                        }`}
+                    >
+                      {preset.label} ({preset.size}px)
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Controles específicos del Reproductor: Estado, Minutero, Like, Progreso */}
             {config.template === 'song-player' && (
               <div className="space-y-3 pt-2 border-t border-neutral-800/80">
@@ -677,11 +1272,10 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                     <button
                       type="button"
                       onClick={() => updatePlayer({ isPlaying: true })}
-                      className={`py-1.5 px-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-                        player.isPlaying !== false
+                      className={`py-1.5 px-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${player.isPlaying !== false
                           ? 'bg-neutral-800 border-emerald-500 text-emerald-400'
                           : 'bg-transparent border-neutral-800 text-neutral-400 hover:text-neutral-200'
-                      }`}
+                        }`}
                     >
                       <Pause className="w-3.5 h-3.5 fill-current" />
                       <span>Pausa (||)</span>
@@ -689,11 +1283,10 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                     <button
                       type="button"
                       onClick={() => updatePlayer({ isPlaying: false })}
-                      className={`py-1.5 px-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-                        player.isPlaying === false
+                      className={`py-1.5 px-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${player.isPlaying === false
                           ? 'bg-neutral-800 border-emerald-500 text-emerald-400'
                           : 'bg-transparent border-neutral-800 text-neutral-400 hover:text-neutral-200'
-                      }`}
+                        }`}
                     >
                       <Play className="w-3.5 h-3.5 fill-current" />
                       <span>Play (▶)</span>
@@ -705,9 +1298,8 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-neutral-300 flex items-center gap-1.5">
                     <Heart
-                      className={`w-3.5 h-3.5 ${
-                        player.isLiked ? 'text-rose-500 fill-rose-500' : 'text-neutral-500'
-                      }`}
+                      className={`w-3.5 h-3.5 ${player.isLiked ? 'text-rose-500 fill-rose-500' : 'text-neutral-500'
+                        }`}
                     />
                     Canción Favorita (Corazón Like)
                   </span>

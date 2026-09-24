@@ -35,12 +35,18 @@ export const AlbumClassicTemplate: React.FC<AlbumClassicTemplateProps> = ({
   };
 
   const tracks = album.tracks || [];
-  const isSquarerFormat = printSize.aspectRatioRatio >= 0.74;
+  const isUltraSquarer = printSize.aspectRatioRatio >= 0.81; // Ej: 24.8x29.8 cm (ratio ~0.832)
+  const isSquarerFormat = printSize.aspectRatioRatio >= 0.74; // Ej: 29.8x39.8, 39.8x49.8
+  const needsCompactCover = tracks.length > 14 && isSquarerFormat;
 
-  // Repartir pistas de manera equilibrada en 2 columnas
-  const halfTracks = Math.ceil(tracks.length / 2);
-  const col1Tracks = tracks.slice(0, halfTracks);
-  const col2Tracks = tracks.slice(halfTracks);
+  // Repartir pistas de manera equilibrada en 2 columnas o personalizada por el usuario
+  const defaultHalf = Math.ceil(tracks.length / 2);
+  const col1Count =
+    album.col1TrackCount !== undefined && album.col1TrackCount > 0 && album.col1TrackCount < tracks.length
+      ? album.col1TrackCount
+      : defaultHalf;
+  const col1Tracks = tracks.slice(0, col1Count);
+  const col2Tracks = tracks.slice(col1Count);
 
   const titleColor = album.titleColor || textColor || '#FFFFFF';
   const artistColor = album.artistColor || textColor || '#E5E5E5';
@@ -56,7 +62,11 @@ export const AlbumClassicTemplate: React.FC<AlbumClassicTemplateProps> = ({
       style={{
         backgroundColor,
         color: textColor,
-        padding: isSquarerFormat ? '5% 5.5% 3.2% 5.5%' : '6% 6.5% 3.8% 6.5%',
+        padding: isUltraSquarer
+          ? '2% 6.5% 2.5% 6.5%'
+          : isSquarerFormat
+            ? '3.5% 6.5% 3% 6.5%'
+            : '6% 6.5% 3.8% 6.5%',
       }}
     >
       {/* Capa de fondo con portada desenfocada ambiental */}
@@ -88,61 +98,83 @@ export const AlbumClassicTemplate: React.FC<AlbumClassicTemplateProps> = ({
         </div>
       )}
 
-      {/* 1. SECCIÓN SUPERIOR: Carátula cuadrada en Ultra-HD */}
-      <div className="w-full aspect-square relative z-10 flex-shrink-0 bg-neutral-900/60 shadow-lg overflow-hidden">
-        {album.coverUrl ? (
-          <img
-            src={getSafeImageUrl(album.coverUrl)}
-            alt={album.title}
-            crossOrigin="anonymous"
-            className="w-full h-full object-cover block"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-neutral-400 bg-neutral-900/40 border border-dashed border-neutral-700">
-            <span className="text-sm font-medium">Sin carátula</span>
-          </div>
-        )}
+      {/* 1. SECCIÓN SUPERIOR: Carátula del Álbum (Cuadrada 1:1, centrada con fino marco de aire si hay más de 14 pistas) */}
+      <div className="w-full flex justify-center items-center flex-shrink-0">
+        <div
+          className="aspect-square relative z-10 bg-neutral-900/60 shadow-lg overflow-hidden transition-all duration-300"
+          style={{
+            width: needsCompactCover ? `${isUltraSquarer ? 86 : 90}%` : '100%',
+          }}
+        >
+          {album.coverUrl ? (
+            <img
+              src={getSafeImageUrl(album.coverUrl)}
+              alt={album.title}
+              crossOrigin="anonymous"
+              className="w-full h-full object-cover block"
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-neutral-400 bg-neutral-900/40 border border-dashed border-neutral-700">
+              <span className="text-sm font-medium">Sin carátula</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 2. ZONA INFERIOR COMPLETA (Cabecera + Divider + Columnas + Spotify Code) */}
-      <div className="w-full flex-1 flex flex-col justify-between relative z-10 pt-2 sm:pt-3 min-h-0">
+      <div className="w-full flex-1 flex flex-col justify-between relative z-10 pt-1.5 sm:pt-2 min-h-0">
         {/* Cabecera: Título, Artista, Paleta y Línea Divisoria */}
         <div className="w-full flex-shrink-0">
           {/* Fila superior: Título (Izq) y Paleta (Der) */}
           <div className="flex items-center justify-between gap-3">
             <h1
-              className={`min-w-0 flex-1 font-black tracking-tight leading-[1.1] text-base sm:text-lg md:text-xl ${album.uppercaseTitle !== false ? 'uppercase' : ''
+              className={`min-w-0 flex-1 font-black tracking-tight leading-[1.1] ${album.titleFontSize ? '' : 'text-xl sm:text-2xl md:text-3xl'
+                } ${album.uppercaseTitle !== false ? 'uppercase' : ''
                 }`}
-              style={{ color: titleColor, wordBreak: 'break-word' }}
+              style={{
+                color: titleColor,
+                fontSize: album.titleFontSize ? `${album.titleFontSize}px` : undefined,
+                wordBreak: 'break-word',
+              }}
             >
               {album.title || 'Title'}
             </h1>
 
             {album.showPalette !== false && album.palette && album.palette.length > 0 && (
               <div className="flex items-center flex-shrink-0">
-                {album.palette.slice(0, 5).map((colorHex, idx) => (
-                  <div
-                    key={`${colorHex}-${idx}`}
-                    className="w-5 h-2.5 sm:w-6 sm:h-3"
-                    style={{ backgroundColor: colorHex }}
-                    title={colorHex}
-                  />
-                ))}
+                {album.palette.slice(0, 5).map((colorHex, idx) => {
+                  const pSize = album.paletteSize ?? 32;
+                  return (
+                    <div
+                      key={`${colorHex}-${idx}`}
+                      style={{
+                        backgroundColor: colorHex,
+                        width: `${pSize}px`,
+                        height: `${Math.round(pSize * 0.5)}px`,
+                      }}
+                      title={colorHex}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>
 
           {/* Fila inferior: Artista */}
           <div
-            className="text-[10px] sm:text-[14px] font-bold uppercase tracking-wider mt-0.5"
-            style={{ color: artistColor }}
+            className={`font-bold uppercase tracking-wider mt-0.5 ${album.artistFontSize ? '' : 'text-[10px] sm:text-[14px]'
+              }`}
+            style={{
+              color: artistColor,
+              fontSize: album.artistFontSize ? `${album.artistFontSize}px` : undefined,
+            }}
           >
             {album.artist || 'Artist'}
           </div>
 
           {/* Línea Divisoria Horizontal Sutil */}
           <div
-            className="w-full h-[1.5px] mt-2 sm:mt-1"
+            className={`w-full h-[1.5px] ${isUltraSquarer ? 'my-1 sm:my-1.5' : 'my-1.5 sm:my-2'}`}
             style={{
               backgroundColor: titleColor,
               opacity: 0.35,
@@ -150,27 +182,34 @@ export const AlbumClassicTemplate: React.FC<AlbumClassicTemplateProps> = ({
           />
         </div>
 
-        {/* Cuerpo: Tracklist (2 columnas) + Metadatos a la derecha */}
-        <div className="w-full flex-1 flex justify-between items-start gap-2.5 sm:gap-4 my-auto min-h-0 pt-2 sm:pt-2.5 pb-1">
-          {/* Columna Izquierda & Central: Lista de canciones en 2 columnas (espacio maximizado) */}
-          <div className="flex-1 min-w-0 pr-2 sm:pr-3">
+        {/* Cuerpo: Tracklist (2 columnas) + Metadatos y Spotify Code a la derecha */}
+        <div className="w-full flex-1 flex justify-between items-stretch gap-2 sm:gap-3 min-h-0 pt-0.5 pb-0.5">
+          {/* Columna Izquierda & Central: Lista de canciones en 2 columnas (espacio maximizado hacia la derecha) */}
+          <div className="flex-1 min-w-0 pr-1 sm:pr-1.5">
             {tracks.length > 0 ? (
-              <div className="grid grid-cols-2 gap-x-2.5 sm:gap-x-4">
+              <div className="grid grid-cols-2 gap-x-2.5 sm:gap-x-3.5">
                 {/* Columna 1 */}
-                <div className={tracks.length > 14 ? 'space-y-[1.5px] sm:space-y-[2.5px]' : 'space-y-[2px] sm:space-y-[3.5px]'}>
+                <div className={tracks.length > 14 ? (isUltraSquarer ? 'space-y-[1px] sm:space-y-[1.5px]' : 'space-y-[1.5px] sm:space-y-[2px]') : 'space-y-[2px] sm:space-y-[3px]'}>
                   {col1Tracks.map((t) => (
                     <div
                       key={t.id}
-                      className={`flex items-start tracking-normal ${tracks.length > 14
-                        ? 'text-[10px] sm:text-[13px]'
-                        : 'text-[12px] sm:text-[14px]'
-                        } leading-[1.2]`}
-                      style={{ color: tracklistColor }}
+                      className={`flex items-start tracking-normal ${album.tracklistFontSize
+                          ? ''
+                          : tracks.length > 14
+                            ? isUltraSquarer
+                              ? 'text-[9px] sm:text-[11px]'
+                              : 'text-[10px] sm:text-[12px]'
+                            : 'text-[11.5px] sm:text-[13.5px]'
+                        } leading-[1.16]`}
+                      style={{
+                        color: tracklistColor,
+                        fontSize: album.tracklistFontSize ? `${album.tracklistFontSize}px` : undefined,
+                      }}
                     >
                       <span className="font-normal mr-1.5 sm:mr-2 opacity-60 tabular-nums select-none flex-shrink-0">
                         {t.number}.
                       </span>
-                      <span className="font-semibold leading-[1.18] break-words min-w-0 flex-1">
+                      <span className="font-semibold leading-[1.16] break-words min-w-0 flex-1">
                         {t.title}
                       </span>
                     </div>
@@ -178,20 +217,27 @@ export const AlbumClassicTemplate: React.FC<AlbumClassicTemplateProps> = ({
                 </div>
 
                 {/* Columna 2 */}
-                <div className={tracks.length > 14 ? 'space-y-[1.5px] sm:space-y-[2.5px]' : 'space-y-[2px] sm:space-y-[3.5px]'}>
+                <div className={tracks.length > 14 ? (isUltraSquarer ? 'space-y-[1px] sm:space-y-[1.5px]' : 'space-y-[1.5px] sm:space-y-[2px]') : 'space-y-[2px] sm:space-y-[3px]'}>
                   {col2Tracks.map((t) => (
                     <div
                       key={t.id}
-                      className={`flex items-start tracking-normal ${tracks.length > 14
-                        ? 'text-[10px] sm:text-[13px]'
-                        : 'text-[12px] sm:text-[14px]'
-                        } leading-[1.2]`}
-                      style={{ color: tracklistColor }}
+                      className={`flex items-start tracking-normal ${album.tracklistFontSize
+                          ? ''
+                          : tracks.length > 14
+                            ? isUltraSquarer
+                              ? 'text-[9px] sm:text-[11px]'
+                              : 'text-[10px] sm:text-[12px]'
+                            : 'text-[11.5px] sm:text-[13.5px]'
+                        } leading-[1.16]`}
+                      style={{
+                        color: tracklistColor,
+                        fontSize: album.tracklistFontSize ? `${album.tracklistFontSize}px` : undefined,
+                      }}
                     >
                       <span className="font-normal mr-1.5 sm:mr-2 opacity-60 tabular-nums select-none flex-shrink-0">
                         {t.number}.
                       </span>
-                      <span className="font-semibold leading-[1.18] break-words min-w-0 flex-1">
+                      <span className="font-semibold leading-[1.16] break-words min-w-0 flex-1">
                         {t.title}
                       </span>
                     </div>
@@ -205,53 +251,76 @@ export const AlbumClassicTemplate: React.FC<AlbumClassicTemplateProps> = ({
             )}
           </div>
 
-          {/* Columna Derecha: Bloque de Metadatos (Release Date y Album Length) */}
-          <div className="w-[28%] min-w-[80px] max-w-[30%] flex-shrink-0 text-right space-y-2 sm:space-y-3 pl-1">            {/* Release Date */}
-            {formattedDate && (
-              <div>
-                <div
-                  className="text-[8px] sm:text-[10.5px] font-bold uppercase tracking-wider opacity-65"
-                  style={{ color: artistColor }}
-                >
-                  Release Date
+          {/* Columna Derecha: Bloque de Metadatos + Código Spotify directamente debajo */}
+          <div className="w-[22%] min-w-[70px] max-w-[28%] flex-shrink-0 text-right flex flex-col items-end pl-0.5">
+            {/* Metadatos superiores */}
+            <div className={`w-full flex flex-col items-end ${isUltraSquarer ? 'space-y-1 sm:space-y-1.5' : 'space-y-1.5 sm:space-y-2'}`}>
+              {/* Release Date */}
+              {formattedDate && (
+                <div>
+                  <div
+                    className="font-bold uppercase tracking-wider opacity-65"
+                    style={{
+                      color: album.releaseDateColor || artistColor,
+                      fontSize: `${Math.max(6, Math.round((album.metadataFontSize ?? 12) * 0.78))}px`,
+                    }}
+                  >
+                    Release Date
+                  </div>
+                  <div
+                    className="font-extrabold mt-0.5 tracking-tight whitespace-nowrap"
+                    style={{
+                      color: album.releaseDateColor || titleColor,
+                      fontSize: `${album.metadataFontSize ?? 12}px`,
+                    }}
+                  >
+                    {formattedDate}
+                  </div>
                 </div>
+              )}
+
+              {/* Album Length */}
+              {formattedDuration && (
+                <div>
+                  <div
+                    className="font-bold uppercase tracking-wider opacity-65"
+                    style={{
+                      color: album.durationColor || artistColor,
+                      fontSize: `${Math.max(6, Math.round((album.metadataFontSize ?? 12) * 0.78))}px`,
+                    }}
+                  >
+                    Album Length
+                  </div>
+                  <div
+                    className="font-extrabold mt-0.5 tracking-tight whitespace-nowrap"
+                    style={{
+                      color: album.durationColor || titleColor,
+                      fontSize: `${album.metadataFontSize ?? 12}px`,
+                    }}
+                  >
+                    {formattedDuration}
+                  </div>
+                </div>
+              )}
+
+              {/* Código Spotify directamente debajo de Album Length sin dejar espacio vacío y con crecimiento libre proporcional */}
+              <div className={`${isUltraSquarer ? 'pt-1.5' : 'pt-2.5'} flex justify-end items-center self-end`}>
                 <div
-                  className="text-[9.5px] sm:text-[12.5px] font-extrabold mt-0.5 tracking-tight"
-                  style={{ color: titleColor }}
+                  className="flex items-center justify-end flex-shrink-0"
+                  style={{
+                    height: `${album.spotifyCodeSize ?? 30}px`,
+                    width: `${Math.round((album.spotifyCodeSize ?? 30) * 4)}px`,
+                    aspectRatio: '4 / 1',
+                  }}
                 >
-                  {formattedDate}
+                  <SpotifyCode
+                    uri={album.spotifyUri || 'spotify:album:4m2880jivSbbyEGAKfITCa'}
+                    color={album.soundwaveColor || textColor || '#FFFFFF'}
+                    className="h-full w-full"
+                  />
                 </div>
               </div>
-            )}
-
-            {/* Album Length */}
-            {formattedDuration && (
-              <div>
-                <div
-                  className="text-[8px] sm:text-[10.5px] font-bold uppercase tracking-wider opacity-65"
-                  style={{ color: artistColor }}
-                >
-                  Album Length
-                </div>
-                <div
-                  className="text-[9.5px] sm:text-[12.5px] font-extrabold mt-0.5 tracking-tight"
-                  style={{ color: titleColor }}
-                >
-                  {formattedDuration}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Pie: Código de Spotify Scannable Centrado (Siempre anclado al fondo sin colisión) */}
-        <div className="w-full flex-shrink-0 flex justify-end items-end">
-          <div className="h-[32px] sm:h-[38px] flex items-center justify-center">
-            <SpotifyCode
-              uri={album.spotifyUri || 'spotify:album:4m2880jivSbbyEGAKfITCa'}
-              color={album.soundwaveColor || textColor || '#FFFFFF'}
-              className="h-full w-auto"
-            />
+            </div>
           </div>
         </div>
       </div>

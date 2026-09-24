@@ -4,7 +4,7 @@ import React from 'react';
 
 import { PlayerData, PrintSize } from '@/types/poster';
 import { SpotifyCode } from '../SpotifyCode';
-import { Heart, Shuffle, SkipBack, SkipForward, Repeat } from 'lucide-react';
+import { Heart, Shuffle, SkipBack, SkipForward } from 'lucide-react';
 
 interface SongPlayerTemplateProps {
   player: PlayerData;
@@ -35,20 +35,30 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
     return `/api/image-proxy?url=${encodeURIComponent(url)}`;
   };
 
+  const isUltraSquarer = printSize.aspectRatioRatio >= 0.81;
   const isSquarerFormat = printSize.aspectRatioRatio >= 0.74;
   const titleColor = player.titleColor || textColor || '#FFFFFF';
   const artistColor = player.artistColor || textColor || '#D4D4D4';
 
-  const isLightBackground =
-    backgroundColor === '#FFFFFF' ||
-    backgroundColor.toLowerCase() === '#fff' ||
-    backgroundColor.toLowerCase() === 'white' ||
-    (backgroundColor.startsWith('#') &&
-      backgroundColor.length === 7 &&
-      parseInt(backgroundColor.slice(1, 3), 16) * 0.299 +
-        parseInt(backgroundColor.slice(3, 5), 16) * 0.587 +
-        parseInt(backgroundColor.slice(5, 7), 16) * 0.114 >
-        180);
+  const getContrastColor = (hexColor: string) => {
+    if (!hexColor) return '#000000';
+    const clean = hexColor.replace('#', '');
+    if (clean.length === 3) {
+      const r = parseInt(clean[0] + clean[0], 16);
+      const g = parseInt(clean[1] + clean[1], 16);
+      const b = parseInt(clean[2] + clean[2], 16);
+      return (r * 299 + g * 587 + b * 114) / 1000 >= 128 ? '#000000' : '#FFFFFF';
+    }
+    if (clean.length === 6) {
+      const r = parseInt(clean.slice(0, 2), 16);
+      const g = parseInt(clean.slice(2, 4), 16);
+      const b = parseInt(clean.slice(4, 6), 16);
+      return (r * 299 + g * 587 + b * 114) / 1000 >= 128 ? '#000000' : '#FFFFFF';
+    }
+    return '#000000';
+  };
+
+  const playIconColor = getContrastColor(titleColor);
 
   return (
     <div
@@ -56,7 +66,11 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
       style={{
         backgroundColor,
         color: textColor,
-        padding: isSquarerFormat ? '5.5% 6.5%' : '7% 7.5%',
+        padding: isUltraSquarer
+          ? '2.2% 6.5% 4.2% 6.5%'
+          : isSquarerFormat
+            ? '3.5% 6.5% 4.8% 6.5%'
+            : '5.5% 7.5% 6.5% 7.5%',
       }}
     >
       {/* Capa de fondo con portada desenfocada ambiental */}
@@ -81,56 +95,62 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
               className="absolute inset-0"
               style={{
                 backgroundColor: backgroundColor || '#000000',
-                opacity: 0.4,
+                opacity: 0.35,
               }}
             />
           )}
         </div>
       )}
 
-      {/* 1. FOTO / CARÁTULA CUADRADA SUPERIOR */}
+      {/* 1. FOTO PRINCIPAL / CARÁTULA CUADRADA (100% íntegra) */}
       <div
-        className="w-full aspect-square relative z-10 flex-shrink-0 bg-neutral-900 shadow-xl overflow-hidden"
-        style={{
-          borderRadius: `${player.coverBorderRadius ?? 8}px`,
-        }}
+        className="w-full aspect-square relative z-10 flex-shrink-0 bg-neutral-900/60 shadow-2xl overflow-hidden"
+        style={{ borderRadius: `${player.coverBorderRadius ?? 8}px` }}
       >
         {player.coverUrl ? (
           <img
             src={getSafeImageUrl(player.coverUrl)}
             alt={player.title}
             crossOrigin="anonymous"
-            className={`w-full h-full object-cover block ${
-              player.isBlackAndWhite ? 'grayscale contrast-105' : ''
-            }`}
+            className={`w-full h-full object-cover block ${player.isBlackAndWhite ? 'grayscale contrast-105' : ''}`}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-neutral-500 bg-neutral-900/60 border border-dashed border-neutral-700">
-            <span className="text-sm font-medium">Sube una foto o carátula</span>
+          <div className="w-full h-full flex flex-col items-center justify-center text-neutral-400 bg-neutral-900/40 border border-dashed border-neutral-700">
+            <span className="text-sm font-medium">Sin imagen</span>
           </div>
         )}
       </div>
 
-      {/* 2. TÍTULO, ARTISTA Y CÓDIGO SPOTIFY ALINEADOS EN LA MISMA FILA */}
-      <div className="w-full flex items-center justify-between gap-3 relative z-10 my-2.5 sm:my-3">
-        {/* Izquierda: Título y Artista */}
-        <div className="min-w-0 flex-1 pr-2">
-          <h2
-            className="text-sm sm:text-base md:text-lg font-black tracking-tight uppercase truncate leading-tight"
-            style={{ color: titleColor }}
+      {/* 2. FILA DE INFORMACIÓN (TÍTULO + ARTISTA A LA IZQUIERDA | CÓDIGO SPOTIFY A LA DERECHA) */}
+      <div className="w-full flex items-center justify-between gap-3 pt-3 relative z-10">
+        <div className="flex-1 min-w-0 pr-2">
+          <h1
+            className="font-extrabold tracking-tight truncate leading-tight"
+            style={{
+              color: titleColor,
+              fontSize: player.titleFontSize ? `${player.titleFontSize}px` : undefined,
+            }}
           >
-            {player.title || 'Título de la Canción'}
-          </h2>
+            {player.title || 'Título de Canción'}
+          </h1>
           <p
-            className="text-xs sm:text-sm font-semibold truncate mt-0.5 opacity-80"
-            style={{ color: artistColor }}
+            className="font-semibold truncate mt-0.5 tracking-normal opacity-90"
+            style={{
+              color: artistColor,
+              fontSize: player.artistFontSize ? `${player.artistFontSize}px` : undefined,
+            }}
           >
-            {player.artist || 'Artista'}
+            {player.artist || 'Nombre del Artista'}
           </p>
         </div>
 
-        {/* Derecha: Código de Spotify Scannable */}
-        <div className="flex-shrink-0 flex items-center justify-end h-7 sm:h-8 md:h-9 max-w-[48%]">
+        {/* Código Escaneable de Spotify a la derecha */}
+        <div
+          className={`flex-shrink-0 flex items-center justify-end max-w-[52%] ${player.spotifyCodeSize ? '' : 'h-9 sm:h-11 md:h-12'}`}
+          style={{
+            height: player.spotifyCodeSize ? `${player.spotifyCodeSize}px` : undefined,
+          }}
+        >
           <SpotifyCode
             uri={player.spotifyUri || 'spotify:track:4cOdK2wGLETKBW3PvgPWqT'}
             color={player.soundwaveColor || titleColor || '#FFFFFF'}
@@ -139,13 +159,13 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
         </div>
       </div>
 
-      {/* 3. LÍNEA DE PROGRESO Y MINUTERO */}
-      <div className="w-full relative z-10 mb-2 sm:mb-2.5">
-        {/* Barra de progreso */}
+      {/* 3. BARRA DE PROGRESO DE SPOTIFY */}
+      <div className="w-full pt-5 relative z-10">
+        {/* Línea de pista completa */}
         <div
-          className="relative w-full h-[3px] sm:h-[3.5px] rounded-full flex items-center overflow-visible"
+          className="w-full h-[3px] sm:h-[4px] rounded-full relative flex items-center cursor-default"
           style={{
-            backgroundColor: isLightBackground ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.22)',
+            backgroundColor: 'rgba(255,255,255,0.22)',
           }}
         >
           {/* Progreso reproducido */}
@@ -166,9 +186,9 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
           />
         </div>
 
-        {/* Indicadores de tiempo transcurrido y total */}
+        {/* Indicadores de tiempo transcurrido y total (Minutos con mayor tamaño) */}
         <div
-          className="flex justify-between items-center text-[10px] sm:text-[11px] font-medium mt-1.5 tabular-nums opacity-80"
+          className="flex justify-between items-center text-[12px] sm:text-[13.5px] font-semibold mt-2 tabular-nums opacity-90 tracking-tight"
           style={{ color: artistColor }}
         >
           <span>{player.currentTime || '0:58'}</span>
@@ -176,91 +196,98 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
         </div>
       </div>
 
-      {/* 4. CONTROLES DEL REPRODUCTOR */}
-      <div
-        className="w-full flex items-center justify-between px-1 relative z-10 my-1 sm:my-2"
-        style={{ color: titleColor }}
-      >
-        {/* Shuffle */}
-        <button type="button" className="opacity-75 hover:opacity-100 transition-opacity">
-          <Shuffle className="w-4 sm:w-5 h-4 sm:h-5 stroke-[2.2]" />
-        </button>
-
-        {/* Anterior */}
-        <button type="button" className="opacity-90 hover:opacity-100 transition-opacity">
-          <SkipBack className="w-5 sm:w-6 h-5 sm:h-6 fill-current" />
-        </button>
-
-        {/* Botón Circular Central de Play/Pausa */}
-        <button
-          type="button"
-          className={`${
-            isSquarerFormat ? 'w-10 h-10 sm:w-11 sm:h-11' : 'w-11 h-11 sm:w-12 sm:h-12'
-          } rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105 flex-shrink-0`}
-          style={{
-            backgroundColor: titleColor,
-            color: isLightBackground ? '#FFFFFF' : '#000000',
-          }}
-          title={player.isPlaying !== false ? 'Pausar' : 'Reproducir'}
+      {/* 4. SECCIÓN INFERIOR: CONTROLES DEL REPRODUCTOR Y PALETA DE COLORES */}
+      <div className="w-full flex flex-col relative z-10">
+        {/* Controles del Reproductor (Play/Pausa 100% Centrado + 4 Iconos Equidistantes) */}
+        <div
+          className="w-full flex items-center justify-between px-1 sm:px-2 mb-2 sm:mb-5"
+          style={{ color: titleColor }}
         >
-          {player.isPlaying !== false ? (
-            /* Icono Pausa (||) - perfectamente simétrico */
-            <div className="flex items-center justify-center gap-1 sm:gap-1.5">
-              <span className="w-1 sm:w-1.2 h-3.5 sm:h-4 bg-current rounded-[1px] block" />
-              <span className="w-1 sm:w-1.2 h-3.5 sm:h-4 bg-current rounded-[1px] block" />
-            </div>
-          ) : (
-            /* Icono Play (▶) - compensación óptica exacta en el centro de gravedad */
-            <svg
-              viewBox="0 0 24 24"
-              className="w-4.5 h-4.5 sm:w-5 sm:h-5 fill-current"
-              style={{ marginLeft: '2px' }}
-            >
-              <polygon points="6 4 20 12 6 20" />
-            </svg>
-          )}
-        </button>
+          {/* Bloque Izquierdo (Shuffle + Anterior uniformemente separados) */}
+          <div className="flex-1 flex items-center justify-around">
+            <button type="button" className="opacity-80 hover:opacity-100 transition-opacity p-1">
+              <Shuffle className="w-5 sm:w-6 h-5 sm:h-6 stroke-[2.2]" />
+            </button>
+            <button type="button" className="opacity-95 hover:opacity-100 transition-opacity p-1">
+              <SkipBack className="w-6 sm:w-7 h-6 sm:h-7 fill-current" />
+            </button>
+          </div>
 
-        {/* Siguiente */}
-        <button type="button" className="opacity-90 hover:opacity-100 transition-opacity">
-          <SkipForward className="w-5 sm:w-6 h-5 sm:h-6 fill-current" />
-        </button>
-
-        {/* Repetir y Favorito agrupados a la derecha */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          <button type="button" className="opacity-75 hover:opacity-100 transition-opacity">
-            <Repeat className="w-4 sm:w-4.5 h-4 sm:h-4.5 stroke-[2.2]" />
-          </button>
-          <button type="button" className="opacity-90 hover:opacity-100 transition-opacity">
-            <Heart
-              className="w-4 sm:w-4.5 h-4 sm:h-4.5 transition-colors"
+          {/* Botón Circular Central de Play/Pausa (Matemáticamente Centrado al 50%) */}
+          <div className="flex-shrink-0 flex items-center justify-center mx-2 sm:mx-4">
+            <button
+              type="button"
+              className={`${isSquarerFormat ? 'w-11 h-11 sm:w-13 sm:h-13' : 'w-12 h-12 sm:w-14 sm:h-14'
+                } rounded-full flex items-center justify-center shadow-xl transition-transform hover:scale-105 flex-shrink-0`}
               style={{
-                color: player.isLiked ? titleColor : 'currentColor',
-                fill: player.isLiked ? titleColor : 'none',
+                backgroundColor: titleColor,
               }}
-            />
-          </button>
-        </div>
-      </div>
+              title={player.isPlaying !== false ? 'Pausar' : 'Reproducir'}
+            >
+              {player.isPlaying !== false ? (
+                /* Icono Pausa (||) - perfectamente simétrico y con alto contraste garantizado */
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                  <span
+                    className="w-1.2 sm:w-1.5 h-4 sm:h-5 rounded-[1.5px] block"
+                    style={{ backgroundColor: playIconColor }}
+                  />
+                  <span
+                    className="w-1.2 sm:w-1.5 h-4 sm:h-5 rounded-[1.5px] block"
+                    style={{ backgroundColor: playIconColor }}
+                  />
+                </div>
+              ) : (
+                /* Icono Play (▶) - compensación óptica exacta en el centro de gravedad */
+                <svg
+                  viewBox="0 0 24 24"
+                  className="w-5 h-5 sm:w-6 sm:h-6"
+                  style={{ fill: playIconColor, marginLeft: '3px' }}
+                >
+                  <polygon points="6 4 20 12 6 20" />
+                </svg>
+              )}
+            </button>
+          </div>
 
-      {/* 5. PALETA DE COLORES (5 Rectángulos horizontales como en la placa de referencia) */}
-      {player.showPalette !== false && (
-        <div className="w-full flex items-center gap-2 sm:gap-2.5 pt-1.5 pb-0.5 relative z-10">
-          {(player.palette && player.palette.length > 0
-            ? player.palette
-            : ['#D6C6B6', '#B0A296', '#696058', '#403A36', '#1E1B19']
-          )
-            .slice(0, 5)
-            .map((hex, i) => (
-              <div
-                key={`${hex}-${i}`}
-                className="flex-1 h-3 sm:h-3.5 rounded-[2px] shadow-sm transition-transform hover:scale-[1.02]"
-                style={{ backgroundColor: hex }}
-                title={hex}
+          {/* Bloque Derecho (Siguiente + Favorito Corazón uniformemente separados) */}
+          <div className="flex-1 flex items-center justify-around">
+            <button type="button" className="opacity-95 hover:opacity-100 transition-opacity p-1">
+              <SkipForward className="w-6 sm:w-7 h-6 sm:h-7 fill-current" />
+            </button>
+            <button type="button" className="opacity-95 hover:opacity-100 transition-opacity p-1">
+              <Heart
+                className="w-5 sm:w-6 h-5 sm:h-6 transition-colors"
+                style={{
+                  color: player.isLiked ? titleColor : 'currentColor',
+                  fill: player.isLiked ? titleColor : 'none',
+                }}
               />
-            ))}
+            </button>
+          </div>
         </div>
-      )}
+
+        {/* 5. PALETA DE COLORES (5 Rectángulos horizontales como en la placa de referencia) */}
+        {player.showPalette !== false && (
+          <div className="w-full flex items-center gap-2 sm:gap-2.5 pt-0.5">
+            {(player.palette && player.palette.length > 0
+              ? player.palette
+              : ['#D6C6B6', '#B0A296', '#696058', '#403A36', '#1E1B19']
+            )
+              .slice(0, 5)
+              .map((hex, i) => (
+                <div
+                  key={`${hex}-${i}`}
+                  className={`border border-black border-opacity-30 flex-1 rounded-[2px] shadow-sm transition-transform hover:scale-[1.02] ${player.paletteSize ? '' : 'h-3 sm:h-3.5'}`}
+                  style={{
+                    backgroundColor: hex,
+                    height: player.paletteSize ? `${player.paletteSize}px` : undefined,
+                  }}
+                  title={hex}
+                />
+              ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

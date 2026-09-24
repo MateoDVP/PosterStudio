@@ -59,7 +59,47 @@ export async function exportToPdf(
   const finalPdfName = `${cleanBaseName}.pdf`;
 
   // --------------------------------------------------------------------------
-  // MÉTODO 1 (PRIMARIO): PUPPETEER CHROMIUM VECTORIAL ENGINE
+  // MÉTODO 1 (PRIMARIO): CAPTURA FIEL 1:1 DESDE EL DOM A 300 DPI PRE-PRENSA
+  // --------------------------------------------------------------------------
+  if (domElement) {
+    try {
+      onProgress?.('Capturando diseño de pantalla a resolución de imprenta (300 DPI)...');
+      const dataUrl = await generatePngDataUrl(domElement, printSize, onProgress);
+
+      onProgress?.(
+        `Creando documento PDF de imprenta (${printSize.widthMm} × ${printSize.heightMm} mm)...`
+      );
+
+      const pdf = new jsPDF({
+        orientation: printSize.widthMm > printSize.heightMm ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: [printSize.widthMm, printSize.heightMm],
+        compress: true,
+      });
+
+      // Añadir imagen a escala exacta física 1:1 en mm con compresión Flate sin pérdidas (lossless)
+      pdf.addImage(
+        dataUrl,
+        'PNG',
+        0,
+        0,
+        printSize.widthMm,
+        printSize.heightMm,
+        undefined,
+        'FAST'
+      );
+
+      onProgress?.('Guardando archivo PDF...');
+      pdf.save(finalPdfName);
+      onProgress?.('¡Exportación PDF para imprenta (300 DPI) completada!');
+      return;
+    } catch (domErr) {
+      console.warn('Fallo en la captura de DOM para PDF, probando método alternativo:', domErr);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // MÉTODO 2 (RESPALDO 1): PUPPETEER CHROMIUM VECTORIAL ENGINE
   // --------------------------------------------------------------------------
   if (config) {
     try {
@@ -101,7 +141,7 @@ export async function exportToPdf(
   }
 
   // --------------------------------------------------------------------------
-  // MÉTODO 2 (RESPALDO): JSDOM / SVG2PDF LOCAL EN NAVEGADOR
+  // MÉTODO 3 (RESPALDO 2): JSDOM / SVG2PDF LOCAL EN NAVEGADOR
   // --------------------------------------------------------------------------
   try {
     if (config) {
@@ -132,39 +172,8 @@ export async function exportToPdf(
       onProgress?.('¡Exportación PDF completada con éxito!');
       return;
     }
-
-    // Si no se proporcionó config pero sí un elemento del DOM
-    if (domElement) {
-      onProgress?.('Generando imagen de alta resolución para preprensa...');
-      const dataUrl = await generatePngDataUrl(domElement, printSize, onProgress);
-
-      const pdf = new jsPDF({
-        orientation: printSize.widthMm > printSize.heightMm ? 'landscape' : 'portrait',
-        unit: 'mm',
-        format: [printSize.widthMm, printSize.heightMm],
-        compress: false,
-      });
-
-      pdf.addImage(dataUrl, 'PNG', 0, 0, printSize.widthMm, printSize.heightMm, undefined, 'NONE');
-      pdf.save(finalPdfName);
-      onProgress?.('¡Exportación PDF completada!');
-    }
   } catch (error) {
-    console.error('Error en exportación PDF local, aplicando respaldo PNG:', error);
-    if (domElement) {
-      onProgress?.('Aplicando respaldo de preprensa en alta resolución...');
-      const dataUrl = await generatePngDataUrl(domElement, printSize, onProgress);
-      const pdf = new jsPDF({
-        orientation: printSize.widthMm > printSize.heightMm ? 'landscape' : 'portrait',
-        unit: 'mm',
-        format: [printSize.widthMm, printSize.heightMm],
-        compress: false,
-      });
-      pdf.addImage(dataUrl, 'PNG', 0, 0, printSize.widthMm, printSize.heightMm, undefined, 'NONE');
-      pdf.save(finalPdfName);
-      onProgress?.('¡Exportación PDF completada con respaldo de preprensa!');
-      return;
-    }
+    console.error('Error en exportación PDF local:', error);
     throw error;
   }
 }

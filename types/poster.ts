@@ -1,4 +1,4 @@
-export type PresetPrintSizeKey = 'a5' | 'a4' | 'a3' | '30x40' | '50x70';
+export type PresetPrintSizeKey = '24.8x29.8' | '29.8x39.8' | '39.8x49.8' | '49.8x69.8';
 export type PrintSizeKey = PresetPrintSizeKey | 'custom';
 
 export interface CustomSizeConfig {
@@ -40,12 +40,21 @@ export interface AlbumData {
   soundwaveColor: string; // hex color for code
   soundwaveBgColor: string; // 'transparent' | 'ffffff' | '000000'
   trackColumns: 1 | 2;
+  col1TrackCount?: number; // Cantidad de canciones asignadas al bloque 1 (el resto va al bloque 2)
   uppercaseTitle: boolean;
   titleColor?: string;
   artistColor?: string;
   tracklistColor?: string;
+  releaseDateColor?: string;
+  durationColor?: string;
   palette?: string[]; // 5 colores dominantes extraídos con ColorThief
   showPalette?: boolean; // Alternar visibilidad de los cuadritos de paleta en el póster
+  titleFontSize?: number; // Tamaño numérico del título en px
+  artistFontSize?: number; // Tamaño numérico del artista en px
+  tracklistFontSize?: number; // Tamaño numérico del tracklist en px
+  metadataFontSize?: number; // Tamaño numérico de fecha y duración en px (etiquetas se escalan proporcionalmente)
+  spotifyCodeSize?: number; // Altura numérica del código Spotify en px
+  paletteSize?: number; // Tamaño numérico de los cuadros/muestras de la paleta en px
 }
 
 export interface PlayerData {
@@ -67,6 +76,10 @@ export interface PlayerData {
   artistColor?: string;
   palette?: string[]; // 5 colores dominantes de la carátula
   showPalette?: boolean; // visibilidad de los 5 rectángulos de paleta al pie
+  titleFontSize?: number; // Tamaño numérico del título en px
+  artistFontSize?: number; // Tamaño numérico del artista en px
+  spotifyCodeSize?: number; // Altura numérica del código Spotify en px
+  paletteSize?: number; // Tamaño numérico / altura de los rectángulos de la paleta en px
 }
 
 export interface PosterConfig {

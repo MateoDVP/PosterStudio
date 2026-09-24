@@ -36,7 +36,7 @@ export const PosterRenderer = forwardRef<HTMLDivElement, PosterRendererProps>(
         <div
           ref={ref}
           id="poster-canvas"
-          className="relative shadow-2xl transition-all duration-300 overflow-hidden flex flex-col select-none"
+          className="relative shadow-2xl transition-shadow duration-300 overflow-hidden flex flex-col select-none"
           style={{
             backgroundColor: config.backgroundColor || '#FFFFFF',
             aspectRatio: `${printSize.widthMm} / ${printSize.heightMm}`,

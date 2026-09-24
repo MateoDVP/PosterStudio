@@ -228,11 +228,12 @@ const CustomSizeEditor: React.FC<CustomSizeEditorProps> = ({
         </div>
         <div className="flex flex-wrap gap-1">
           {[
-            { label: '20 × 30', w: 20, h: 30 },
+            { label: '24.8 × 29.8', w: 24.8, h: 29.8 },
+            { label: '29.8 × 39.8', w: 29.8, h: 39.8 },
+            { label: '39.8 × 49.8', w: 39.8, h: 49.8 },
+            { label: '49.8 × 69.8', w: 49.8, h: 69.8 },
             { label: '30 × 30', w: 30, h: 30 },
-            { label: '40 × 50', w: 40, h: 50 },
-            { label: '40 × 60', w: 40, h: 60 },
-            { label: '60 × 90', w: 60, h: 90 },
+            { label: '50 × 50', w: 50, h: 50 },
           ].map((preset) => {
             const isPresetActive = currentW === preset.w && currentH === preset.h;
 
@@ -250,11 +251,10 @@ const CustomSizeEditor: React.FC<CustomSizeEditorProps> = ({
                     },
                   }));
                 }}
-                className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
-                  isPresetActive
+                className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${isPresetActive
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
                     : 'bg-neutral-950/60 text-neutral-400 border-neutral-800 hover:text-neutral-200 hover:border-neutral-700'
-                }`}
+                  }`}
               >
                 {preset.label}
               </button>
@@ -320,13 +320,12 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
               {config.template === 'album-gallery'
                 ? 'Galería'
                 : config.template === 'album-classic'
-                ? 'Clásico'
-                : 'Placa'} • {activePrintSize.id === 'custom' ? `${activePrintSize.widthMm / 10} × ${activePrintSize.heightMm / 10} cm` : activePrintSize.name}
+                  ? 'Clásico'
+                  : 'Placa'} • {activePrintSize.id === 'custom' ? `${activePrintSize.widthMm / 10} × ${activePrintSize.heightMm / 10} cm` : activePrintSize.name}
             </span>
             <ChevronDown
-              className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${
-                openSections.includes('formato') ? 'rotate-180' : ''
-              }`}
+              className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${openSections.includes('formato') ? 'rotate-180' : ''
+                }`}
             />
           </div>
         </Accordion.ItemTrigger>
@@ -342,11 +341,10 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                 <button
                   type="button"
                   onClick={() => handleTemplateChange('album-gallery')}
-                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${
-                    config.template === 'album-gallery'
+                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${config.template === 'album-gallery'
                       ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30 font-medium'
                       : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                  }`}
+                    }`}
                 >
                   <Disc3 className="w-4 h-4 flex-shrink-0 text-emerald-400" />
                   <div>
@@ -358,11 +356,10 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                 <button
                   type="button"
                   onClick={() => handleTemplateChange('album-classic')}
-                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${
-                    config.template === 'album-classic'
+                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${config.template === 'album-classic'
                       ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30 font-medium'
                       : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                  }`}
+                    }`}
                 >
                   <LayoutTemplate className="w-4 h-4 flex-shrink-0 text-emerald-400" />
                   <div>
@@ -374,11 +371,10 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                 <button
                   type="button"
                   onClick={() => handleTemplateChange('song-player')}
-                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${
-                    config.template === 'song-player'
+                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${config.template === 'song-player'
                       ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30 font-medium'
                       : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                  }`}
+                    }`}
                 >
                   <Music2 className="w-4 h-4 flex-shrink-0 text-emerald-400" />
                   <div>
@@ -405,14 +401,11 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                 {PRESET_PRINT_SIZE_KEYS.map((key) => {
                   const size = PRINT_SIZES[key];
                   const isSelected = config.sizeKey === key;
-                  const isSquarer = size.aspectRatioRatio >= 0.74;
-
                   const usageMap: Record<PresetPrintSizeKey, string> = {
-                    a5: 'Portarretratos y placas acrílicas',
-                    a4: 'Escritorio y diplomas estándar',
-                    a3: 'Póster mediano de pared',
-                    '30x40': 'Marcos IKEA estándar (3:4)',
-                    '50x70': 'Póster grande de galería / museo',
+                    '24.8x29.8': 'Marco 25 × 30 cm estándar',
+                    '29.8x39.8': 'Marco 30 × 40 cm estándar',
+                    '39.8x49.8': 'Marco 40 × 50 cm estándar',
+                    '49.8x69.8': 'Marco 50 × 70 cm estándar',
                   };
 
                   return (
@@ -420,20 +413,18 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                       key={key}
                       type="button"
                       onClick={() => handleSizeChange(key)}
-                      className={`p-2 rounded-lg border text-left transition-all flex items-center gap-2.5 ${
-                        isSelected
+                      className={`p-2 rounded-lg border text-left transition-all flex items-center gap-2.5 ${isSelected
                           ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30'
                           : 'border-neutral-800/80 bg-neutral-900/40 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                      }`}
+                        }`}
                     >
                       {/* Miniature Paper Silhouette */}
                       <div className="w-6 h-8 flex items-center justify-center flex-shrink-0 bg-neutral-950/80 rounded border border-neutral-800 p-0.5">
                         <div
-                          className={`border transition-colors ${
-                            isSelected
+                          className={`border transition-colors ${isSelected
                               ? 'border-emerald-400 bg-emerald-500/30'
                               : 'border-neutral-600 bg-neutral-800/40'
-                          }`}
+                            }`}
                           style={{
                             aspectRatio: `${size.widthMm} / ${size.heightMm}`,
                             height: '100%',
@@ -450,7 +441,7 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                           </span>
                         </div>
                         <div className="text-[10px] text-neutral-500 truncate mt-0.5">
-                          {usageMap[key]} {isSquarer ? '• Ratio 3:4' : '• Ratio 1:1.41'}
+                          {usageMap[key]} • Ratio {size.aspectRatioRatio.toFixed(2)}
                         </div>
                       </div>
                     </button>
@@ -468,18 +459,16 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                         customSize: prev.customSize || DEFAULT_CUSTOM_SIZE,
                       }));
                     }}
-                    className={`w-full p-2 rounded-lg border text-left transition-all flex items-center gap-2.5 ${
-                      config.sizeKey === 'custom'
+                    className={`w-full p-2 rounded-lg border text-left transition-all flex items-center gap-2.5 ${config.sizeKey === 'custom'
                         ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30'
                         : 'border-neutral-800/80 bg-neutral-900/40 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                    }`}
+                      }`}
                   >
                     {/* Miniature Custom Icon */}
                     <div className="w-6 h-8 flex items-center justify-center flex-shrink-0 bg-neutral-950/80 rounded border border-neutral-800 p-0.5">
                       <Sliders
-                        className={`w-3.5 h-3.5 transition-colors ${
-                          config.sizeKey === 'custom' ? 'text-emerald-400' : 'text-neutral-500'
-                        }`}
+                        className={`w-3.5 h-3.5 transition-colors ${config.sizeKey === 'custom' ? 'text-emerald-400' : 'text-neutral-500'
+                          }`}
                       />
                     </div>
 
@@ -519,11 +508,10 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
               <button
                 type="button"
                 onClick={onToggleGuides}
-                className={`text-[11px] px-2.5 py-1 rounded-md border font-medium transition-colors ${
-                  showGuides
+                className={`text-[11px] px-2.5 py-1 rounded-md border font-medium transition-colors ${showGuides
                     ? 'bg-neutral-800 text-neutral-200 border-neutral-700'
                     : 'bg-transparent text-neutral-500 border-neutral-800 hover:text-neutral-300'
-                }`}
+                  }`}
               >
                 {showGuides ? 'Ocultar guías' : 'Mostrar guías'}
               </button>
@@ -553,9 +541,8 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
               {config.backgroundColor || '#FFFFFF'}
             </span>
             <ChevronDown
-              className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${
-                openSections.includes('fondo') ? 'rotate-180' : ''
-              }`}
+              className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${openSections.includes('fondo') ? 'rotate-180' : ''
+                }`}
             />
           </div>
         </Accordion.ItemTrigger>
@@ -579,11 +566,10 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                       type="button"
                       title={`Color del álbum ${idx + 1}: ${colorHex}`}
                       onClick={() => handleBgColor(colorHex)}
-                      className={`w-4 h-4 rounded-full border shadow-sm transition-transform ${
-                        config.backgroundColor?.toUpperCase() === colorHex.toUpperCase()
+                      className={`w-4 h-4 rounded-full border shadow-sm transition-transform ${config.backgroundColor?.toUpperCase() === colorHex.toUpperCase()
                           ? 'scale-125 border-emerald-500 ring-2 ring-emerald-500/40'
                           : 'border-neutral-700 hover:scale-110'
-                      }`}
+                        }`}
                       style={{ backgroundColor: colorHex }}
                     />
                   ))}
@@ -723,11 +709,10 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                               blurredBackgroundOverlay: tint.id as 'dark' | 'light' | 'paper',
                             }))
                           }
-                          className={`px-2 py-1.5 rounded-lg text-[11px] font-medium border transition-colors ${
-                            (config.blurredBackgroundOverlay || 'dark') === tint.id
+                          className={`px-2 py-1.5 rounded-lg text-[11px] font-medium border transition-colors ${(config.blurredBackgroundOverlay || 'dark') === tint.id
                               ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30'
                               : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:text-neutral-200'
-                          }`}
+                            }`}
                         >
                           {tint.label}
                         </button>

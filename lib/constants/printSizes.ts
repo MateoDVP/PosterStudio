@@ -6,78 +6,72 @@ import { PrintSize, PrintSizeKey, PresetPrintSizeKey, CustomSizeConfig } from '@
  * 1 cm = 10 mm
  */
 export const PRINT_SIZES: Record<PresetPrintSizeKey, PrintSize> = {
-  a5: {
-    id: 'a5',
-    name: 'A5 (14.8 × 21 cm)',
-    category: 'ISO Standard',
-    widthMm: 148,
-    heightMm: 210,
-    widthPx300Dpi: 1748,
-    heightPx300Dpi: 2480,
-    aspectRatioClass: 'aspect-[148/210]',
-    aspectRatioRatio: 148 / 210,
-  },
-  a4: {
-    id: 'a4',
-    name: 'A4 (21 × 29.7 cm)',
-    category: 'ISO Standard',
-    widthMm: 210,
-    heightMm: 297,
-    widthPx300Dpi: 2480,
-    heightPx300Dpi: 3508,
-    aspectRatioClass: 'aspect-[210/297]',
-    aspectRatioRatio: 210 / 297,
-  },
-  a3: {
-    id: 'a3',
-    name: 'A3 (29.7 × 42 cm)',
-    category: 'ISO Standard',
-    widthMm: 297,
-    heightMm: 420,
-    widthPx300Dpi: 3508,
-    heightPx300Dpi: 4960,
-    aspectRatioClass: 'aspect-[297/420]',
-    aspectRatioRatio: 297 / 420,
-  },
-  '30x40': {
-    id: '30x40',
-    name: '30 × 40 cm',
+  '24.8x29.8': {
+    id: '24.8x29.8',
+    name: '24.8 × 29.8 cm',
     category: 'Poster Art',
-    widthMm: 300,
-    heightMm: 400,
-    widthPx300Dpi: 3543,
-    heightPx300Dpi: 4724,
-    aspectRatioClass: 'aspect-[3/4]',
-    aspectRatioRatio: 300 / 400,
+    widthMm: 248,
+    heightMm: 298,
+    widthPx300Dpi: 2929,
+    heightPx300Dpi: 3520,
+    aspectRatioClass: 'aspect-[248/298]',
+    aspectRatioRatio: 248 / 298,
   },
-  '50x70': {
-    id: '50x70',
-    name: '50 × 70 cm',
+  '29.8x39.8': {
+    id: '29.8x39.8',
+    name: '29.8 × 39.8 cm',
     category: 'Poster Art',
-    widthMm: 500,
-    heightMm: 700,
-    widthPx300Dpi: 5906,
-    heightPx300Dpi: 8268,
-    aspectRatioClass: 'aspect-[5/7]',
-    aspectRatioRatio: 500 / 700,
+    widthMm: 298,
+    heightMm: 398,
+    widthPx300Dpi: 3520,
+    heightPx300Dpi: 4701,
+    aspectRatioClass: 'aspect-[298/398]',
+    aspectRatioRatio: 298 / 398,
+  },
+  '39.8x49.8': {
+    id: '39.8x49.8',
+    name: '39.8 × 49.8 cm',
+    category: 'Poster Art',
+    widthMm: 398,
+    heightMm: 498,
+    widthPx300Dpi: 4701,
+    heightPx300Dpi: 5882,
+    aspectRatioClass: 'aspect-[398/498]',
+    aspectRatioRatio: 398 / 498,
+  },
+  '49.8x69.8': {
+    id: '49.8x69.8',
+    name: '49.8 × 69.8 cm',
+    category: 'Poster Art',
+    widthMm: 498,
+    heightMm: 698,
+    widthPx300Dpi: 5882,
+    heightPx300Dpi: 8244,
+    aspectRatioClass: 'aspect-[498/698]',
+    aspectRatioRatio: 498 / 698,
   },
 };
 
-export const PRESET_PRINT_SIZE_KEYS: PresetPrintSizeKey[] = ['a5', 'a4', 'a3', '30x40', '50x70'];
+export const PRESET_PRINT_SIZE_KEYS: PresetPrintSizeKey[] = [
+  '24.8x29.8',
+  '29.8x39.8',
+  '39.8x49.8',
+  '49.8x69.8',
+];
 
-export const DEFAULT_PRINT_SIZE: PresetPrintSizeKey = 'a3';
+export const DEFAULT_PRINT_SIZE: PresetPrintSizeKey = '29.8x39.8';
 
 export const DEFAULT_CUSTOM_SIZE: CustomSizeConfig = {
-  widthCm: 40,
-  heightCm: 50,
+  widthCm: 29.8,
+  heightCm: 39.8,
 };
 
 /**
  * Genera una especificación PrintSize dinámica a partir de medidas en centímetros
  */
 export function createCustomPrintSize(widthCm: number, heightCm: number): PrintSize {
-  const clampedW = Math.max(5, Math.min(300, Number(widthCm) || 40));
-  const clampedH = Math.max(5, Math.min(300, Number(heightCm) || 50));
+  const clampedW = Math.max(5, Math.min(300, Number(widthCm) || DEFAULT_CUSTOM_SIZE.widthCm));
+  const clampedH = Math.max(5, Math.min(300, Number(heightCm) || DEFAULT_CUSTOM_SIZE.heightCm));
   const widthMm = Math.round(clampedW * 10);
   const heightMm = Math.round(clampedH * 10);
   const widthPx300Dpi = Math.round((widthMm / 25.4) * 300);

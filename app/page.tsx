@@ -47,6 +47,9 @@ const INITIAL_POSTER_CONFIG: PosterConfig = {
     tracks: [],
     palette: DEFAULT_PALETTE,
     showPalette: true,
+    metadataFontSize: 12,
+    paletteSize: 32,
+    spotifyCodeSize: 30,
   },
   player: {
     title: '',
@@ -212,13 +215,13 @@ export default function PosterStudioPage() {
     try {
       const baseFilename = getExportBaseFileName(config, activePrintSize);
       await exportToPdf(
-        config,
+        posterRef.current || config,
         activePrintSize,
         baseFilename,
         (status) => setExportStatus(status),
-        posterRef.current
+        config
       );
-      showNotification('PDF vectorial con trazados generado con éxito', 'success');
+      showNotification('PDF para imprenta (300 DPI) generado con éxito', 'success');
     } catch (err: any) {
       console.error(err);
       showNotification(err.message || 'Error al exportar PDF', 'error');
@@ -294,14 +297,14 @@ export default function PosterStudioPage() {
             onClick={handleExportPdf}
             disabled={exporting}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 text-xs font-bold shadow-md shadow-emerald-500/25 transition-all disabled:opacity-50"
-            title="Generar PDF vectorial con trazados a escala milimétrica para imprenta"
+            title="Generar PDF a escala milimétrica exacta (1:1) a 300 DPI listo para imprenta o taller de cuadros"
           >
             {exporting && exportStatus?.includes('PDF') ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
               <FileText className="w-3.5 h-3.5" />
             )}
-            <span className="hidden sm:inline">PDF Vectorial (mm)</span>
+            <span className="hidden sm:inline">PDF Imprenta (300 DPI)</span>
             <span className="sm:hidden">PDF</span>
           </button>
 
@@ -316,11 +319,11 @@ export default function PosterStudioPage() {
         </div>
       </header>
 
-      {/* Export status toast banner */}
+      {/* Floating export status overlay - fixed to avoid shrinking poster canvas and breaking line wraps */}
       {exportStatus && (
-        <div className="bg-emerald-500/10 border-b border-emerald-500/20 text-emerald-400 px-4 py-1.5 text-xs text-center flex items-center justify-center gap-2 font-medium flex-shrink-0">
-          <Loader2 className="w-3 h-3 animate-spin" />
-          {exportStatus}
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#12141a]/95 backdrop-blur-md border border-emerald-500/40 text-emerald-300 px-5 py-2.5 rounded-full text-xs shadow-2xl shadow-black/80 flex items-center gap-2.5 font-semibold animate-in fade-in slide-in-from-top-2 duration-200">
+          <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+          <span>{exportStatus}</span>
         </div>
       )}
 

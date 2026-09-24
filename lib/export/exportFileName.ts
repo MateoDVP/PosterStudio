@@ -28,13 +28,11 @@ export function getExportBaseFileName(config: PosterConfig, printSize: PrintSize
   const rawTitle = (isSong ? config.player.title : config.album.title)?.trim() || (isSong ? 'Cancion' : 'Album');
   const rawArtist = (isSong ? config.player.artist : config.album.artist)?.trim() || 'Artista';
 
-  // Formato limpio del tamaño sin espacios: A3, A4, A5, 30x40, 50x70 o personalizado (ej: 40x50cm)
+  // Formato limpio del tamaño sin espacios: ej. 24.8x29.8cm, 29.8x39.8cm, 39.8x49.8cm, 49.8x69.8cm o personalizado
   const sizeLabel =
     printSize.id === 'custom'
       ? `${printSize.widthMm / 10}x${printSize.heightMm / 10}cm`
-      : printSize.id.startsWith('a')
-        ? printSize.id.toUpperCase()
-        : printSize.id;
+      : `${printSize.id}cm`;
 
   const cleanTitle = toPascalCaseNoSpaces(rawTitle) || (isSong ? 'Cancion' : 'Album');
   const cleanArtist = toPascalCaseNoSpaces(rawArtist) || 'Artista';

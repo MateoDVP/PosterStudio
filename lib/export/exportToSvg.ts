@@ -193,6 +193,7 @@ export async function generatePosterSvgString(
 ): Promise<string> {
   const width = printSize.widthMm;
   const height = printSize.heightMm;
+  const isUltraSquarer = printSize.aspectRatioRatio >= 0.81;
   const isSquarer = printSize.aspectRatioRatio >= 0.74;
 
   const bgColor = config.backgroundColor || '#FFFFFF';
@@ -225,16 +226,21 @@ export async function generatePosterSvgString(
   if (config.template === 'album-gallery') {
     const album = config.album;
     const tracks = album.tracks || [];
-    const pad = width * (isSquarer ? 0.055 : 0.07);
-    const contentW = width - 2 * pad;
+    const padX = width * 0.065;
+    const padTop = width * (isUltraSquarer ? 0.018 : isSquarer ? 0.035 : 0.06);
+    const padBottom = width * (isUltraSquarer ? 0.028 : isSquarer ? 0.05 : 0.08);
+    const contentW = width - 2 * padX;
     const baseScale = contentW / 255.42;
-    const coverSize = contentW;
-    const coverX = pad;
-    const coverY = pad;
 
-    const lowerY = coverY + coverSize + (isSquarer ? 7 : 9) * baseScale;
-    const bottomLimit = height - pad;
-    const rightColX = width - pad;
+    const needsCompactCover = tracks.length > 14 && isSquarer;
+    const coverScale = needsCompactCover ? (isUltraSquarer ? 0.86 : 0.90) : 1.0;
+    const coverSize = contentW * coverScale;
+    const coverX = padX + (contentW - coverSize) / 2;
+    const coverY = padTop;
+
+    const lowerY = coverY + coverSize + (isSquarer ? 6 : 7.5) * baseScale;
+    const bottomLimit = height - padBottom;
+    const rightColX = width - padX;
 
     onProgress?.('Descargando trazados vectoriales de Spotify...');
     const spotifyColor = album.soundwaveColor || textColor || '#000000';
@@ -265,12 +271,11 @@ export async function generatePosterSvgString(
 
     // --- CAPA 3: PALETA DE COLORES (5 Cuadros vectoriales) ---
     let paletteLayer = '';
-    const sqSize = (isSquarer ? 9.5 : 11.5) * baseScale;
-    const sqGap = (isSquarer ? 2.5 : 3.0) * baseScale;
-
     const rightBlockStartY = lowerY + 2.0 * baseScale;
-    const hasPalette =
-      album.showPalette !== false && album.palette && album.palette.length > 0;
+    const hasPalette = album.showPalette !== false && album.palette && album.palette.length > 0;
+    const paletteMultiplier = (album.paletteSize ?? 32) / 22;
+    const sqSize = (isSquarer ? 9.5 : 11.5) * baseScale * paletteMultiplier;
+    const sqGap = (isSquarer ? 2.5 : 3.0) * baseScale * Math.min(1.2, paletteMultiplier);
 
     if (hasPalette && album.palette) {
       const palette = album.palette.slice(0, 5);
@@ -306,14 +311,18 @@ export async function generatePosterSvgString(
     // 1. Artista (debajo de la paleta)
     const artistGap = (hasPalette ? 4.5 : 1.0) * baseScale;
     const artistTop = paletteEndY + artistGap;
-    const artistFontSize = (isSquarer ? 6.2 : 7.2) * baseScale;
+    const baseArtistFontSize = (isSquarer ? 6.2 : 7.2) * baseScale;
+    const artistMultiplier = album.artistFontSize ? (album.artistFontSize / 14) : 1;
+    const artistFontSize = baseArtistFontSize * artistMultiplier;
     const artistBaselineY = artistTop + artistFontSize * 0.85;
 
     // 2. Título (debajo del artista con presencia editorial destacada)
     const isLongTitle = rawTitle.length > 18;
-    const titleFontSize = (isSquarer
+    const baseTitleFontSize = (isSquarer
       ? (isLongTitle ? 11.5 : 14.0)
       : (isLongTitle ? 13.5 : 16.5)) * baseScale;
+    const fontMultiplier = album.titleFontSize ? album.titleFontSize / 24 : 1;
+    const titleFontSize = baseTitleFontSize * fontMultiplier;
     const titleLineHeight = titleFontSize * 1.06;
     const titleLines = wrapText(rawTitle, isSquarer ? 13 : 15);
 
@@ -334,13 +343,14 @@ export async function generatePosterSvgString(
     const titleTotalHeight = (titleLines.length - 1) * titleLineHeight + titleFontSize;
     const dateGap = 4.0 * baseScale;
     const dateTop = titleTop + titleTotalHeight + dateGap;
-    const dateFontSize = (isSquarer ? 7.8 : 9.2) * baseScale;
+    const metaMultiplier = (album.metadataFontSize ?? 12) / 12;
+    const dateFontSize = (isSquarer ? 7.8 : 9.2) * baseScale * metaMultiplier;
     const dateBaselineY = dateTop + dateFontSize * 0.85;
 
     // 4. Duración Total del Álbum (debajo de la fecha)
     const durationGap = 2.4 * baseScale;
     const durationTop = formattedDate ? dateTop + dateFontSize + durationGap : dateTop;
-    const durationFontSize = (isSquarer ? 6.8 : 8.0) * baseScale;
+    const durationFontSize = (isSquarer ? 6.8 : 8.0) * baseScale * metaMultiplier;
     const durationBaselineY = durationTop + durationFontSize * 0.85;
 
     const albumInfoLayer = `
@@ -352,18 +362,19 @@ export async function generatePosterSvgString(
       ${titleTextElements}
       <!-- Fecha de Lanzamiento -->
       ${formattedDate
-        ? `<text x="${rightColX.toFixed(2)}" y="${dateBaselineY.toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="500" font-size="${dateFontSize.toFixed(2)}" letter-spacing="${(0.4 * baseScale).toFixed(2)}" fill="${artistColor}" opacity="0.9">${escapeXml(formattedDate)}</text>`
+        ? `<text x="${rightColX.toFixed(2)}" y="${dateBaselineY.toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="500" font-size="${dateFontSize.toFixed(2)}" letter-spacing="${(0.4 * baseScale).toFixed(2)}" fill="${album.releaseDateColor || artistColor}" opacity="0.9">${escapeXml(formattedDate)}</text>`
         : ''
       }
       <!-- Duración Total del Álbum -->
       ${formattedDuration
-        ? `<text x="${rightColX.toFixed(2)}" y="${durationBaselineY.toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="normal" font-size="${durationFontSize.toFixed(2)}" fill="${artistColor}" opacity="0.8">${escapeXml(formattedDuration)}</text>`
+        ? `<text x="${rightColX.toFixed(2)}" y="${durationBaselineY.toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="normal" font-size="${durationFontSize.toFixed(2)}" fill="${album.durationColor || artistColor}" opacity="0.8">${escapeXml(formattedDuration)}</text>`
         : ''
       }
     </g>`;
 
     // --- CAPA 5: CÓDIGO ESCANEABLE DE SPOTIFY ---
-    const codeW = (isSquarer ? 76 : 90) * baseScale;
+    const codeMultiplier = (album.spotifyCodeSize ?? 30) / 32;
+    const codeW = (isSquarer ? 76 : 90) * baseScale * codeMultiplier;
     const codeH = codeW * 0.25; // Proporción oficial 4:1
     const codeX = rightColX - codeW;
     const codeY = bottomLimit - codeH;
@@ -381,28 +392,38 @@ export async function generatePosterSvgString(
     // --- CAPA 6: LISTA DE CANCIONES (TRACKLIST) ---
     const tracklistColor = album.tracklistColor || textColor || '#262626';
 
-    const maxSafePerCol = isSquarer ? 9 : 15;
+    const maxSafeSingleCol = isSquarer ? 8 : 10;
     const useTwoColumns =
       album.trackColumns === 2 ||
-      (album.trackColumns !== 1 && tracks.length > maxSafePerCol);
+      (album.trackColumns !== 1 && tracks.length > maxSafeSingleCol);
 
-    // Distribución equitativa entre ambas columnas
+    // Repartición de pistas: personalizada por el usuario o equilibrada 50/50
+    const defaultHalf = Math.ceil(tracks.length / 2);
     const col1Count = useTwoColumns
-      ? Math.min(tracks.length - 1, Math.max(Math.ceil(tracks.length / 2), Math.min(maxSafePerCol, tracks.length - 1)))
+      ? (album.col1TrackCount !== undefined && album.col1TrackCount > 0 && album.col1TrackCount < tracks.length
+        ? album.col1TrackCount
+        : defaultHalf)
       : tracks.length;
 
-    const col1Tracks = tracks.slice(0, col1Count);
+    const col1Tracks = useTwoColumns ? tracks.slice(0, col1Count) : tracks;
     const col2Tracks = useTwoColumns ? tracks.slice(col1Count) : [];
 
-    const leftColW = contentW * 0.52;
-    const colGap = 5 * baseScale;
+    const leftColW = contentW * 0.585;
+    const colGap = (isSquarer ? 3.5 : 5.0) * baseScale;
     const colW = useTwoColumns ? (leftColW - colGap) / 2 : leftColW;
-    const col1X = pad;
-    const col2X = pad + colW + colGap;
+    const col1X = padX;
+    const col2X = padX + colW + colGap;
 
-    const trackFontSize = (tracks.length > 16 ? 4.8 : tracks.length > 10 ? 5.5 : 6.2) * baseScale;
-    const trackLineSpacing = trackFontSize * 1.25;
-    const trackItemGap = trackFontSize * (tracks.length > 16 ? 0.35 : tracks.length > 10 ? 0.50 : 0.70);
+    const maxColItems = Math.max(col1Tracks.length, col2Tracks.length);
+    const baseTrackFontSize = (
+      maxColItems > 13 ? 4.2 : maxColItems > 8 ? 4.6 : 5.4
+    ) * baseScale;
+    const trackMultiplier = album.tracklistFontSize ? (album.tracklistFontSize / 13) : 1;
+    const trackFontSize = baseTrackFontSize * trackMultiplier;
+    const trackLineSpacing = trackFontSize * 1.20;
+    const trackItemGap = trackFontSize * (maxColItems > 13 ? 0.30 : maxColItems > 8 ? 0.36 : 0.50);
+
+    const charsPerLine = useTwoColumns ? 24 : 44;
 
     const renderColumnTracks = (items: typeof tracks, startX: number) => {
       let currentY = lowerY + 2.5 * baseScale;
@@ -410,7 +431,7 @@ export async function generatePosterSvgString(
 
       items.forEach((t) => {
         const rawTrackTitle = t.title || '';
-        const lines = wrapText(rawTrackTitle, useTwoColumns ? 17 : 34);
+        const lines = wrapText(rawTrackTitle, charsPerLine);
         lines.forEach((line, lineIdx) => {
           const lineUpper = line.toUpperCase();
           const displayString = lineIdx === 0 ? `${t.number}. ${lineUpper}` : `   ${lineUpper}`;
@@ -446,12 +467,17 @@ export async function generatePosterSvgString(
   } else if (config.template === 'album-classic') {
     const album = config.album;
     const tracks = album.tracks || [];
-    const pad = width * (isSquarer ? 0.05 : 0.06);
-    const contentW = width - 2 * pad;
+    const padX = width * 0.065;
+    const padTop = width * (isUltraSquarer ? 0.018 : isSquarer ? 0.035 : 0.06);
+    const padBottom = width * (isUltraSquarer ? 0.022 : isSquarer ? 0.03 : 0.038);
+    const contentW = width - 2 * padX;
     const baseScale = contentW / 255.42;
-    const coverSize = contentW;
-    const coverX = pad;
-    const coverY = pad;
+
+    const needsCompactCover = tracks.length > 14 && isSquarer;
+    const coverScale = needsCompactCover ? (isUltraSquarer ? 0.86 : 0.90) : 1.0;
+    const coverSize = contentW * coverScale;
+    const coverX = padX + (contentW - coverSize) / 2;
+    const coverY = padTop;
 
     onProgress?.('Descargando trazados vectoriales de Spotify...');
     const spotifyColor = album.soundwaveColor || textColor || '#FFFFFF';
@@ -494,30 +520,35 @@ export async function generatePosterSvgString(
       : (album.title || 'The Dark Side of the Moon');
     const rawArtist = (album.artist || 'PINK FLOYD').toUpperCase();
 
-    // Paleta de colores a la derecha en la fila superior
+    // Paleta de colores a la derecha en la fila superior (anclada al margen derecho completo)
     const hasPalette = album.showPalette !== false && album.palette && album.palette.length > 0;
     const pColors = hasPalette ? album.palette!.slice(0, 5) : [];
-    const boxW = (isSquarer ? 8.0 : 9.5) * baseScale;
-    const boxH = (isSquarer ? 3.8 : 4.5) * baseScale;
+    const paletteMultiplier = (album.paletteSize ?? 32) / 24;
+    const boxW = (isSquarer ? 8.0 : 9.5) * baseScale * paletteMultiplier;
+    const boxH = (isSquarer ? 3.8 : 4.5) * baseScale * paletteMultiplier;
     const totalPaletteW = pColors.length * boxW;
-    const startPaletteX = coverX + contentW - totalPaletteW;
+    const startPaletteX = padX + contentW - totalPaletteW;
 
     const isLongTitle = rawTitle.length > 22;
-    const titleFontSize = (isSquarer
+    const baseTitleFontSize = (isSquarer
       ? (isLongTitle ? 11.5 : 13.5)
       : (isLongTitle ? 13.0 : 15.5)) * baseScale;
+    const fontMultiplier = album.titleFontSize ? album.titleFontSize / 26 : 1;
+    const titleFontSize = baseTitleFontSize * fontMultiplier;
     const titleLineHeight = titleFontSize * 1.1;
 
-    // Con la paleta a la derecha en la misma fila, calculamos el ancho de línea
-    const maxCharsPerLine = isSquarer
-      ? (hasPalette ? 18 : 22)
-      : (hasPalette ? 21 : 26);
-    const titleLines = wrapText(rawTitle, maxCharsPerLine);
+    // Con la paleta a la derecha en la misma fila, calculamos el ancho de línea de forma adaptativa según el espacio real y tamaño de letra
+    const availableTitleW = hasPalette
+      ? Math.max(contentW * 0.5, contentW - totalPaletteW - 4.0 * baseScale)
+      : contentW;
+    const approxCharW = Math.max(1, titleFontSize * 0.56);
+    const dynamicMaxChars = Math.max(16, Math.floor(availableTitleW / approxCharW));
+    const titleLines = wrapText(rawTitle, dynamicMaxChars);
 
     let titleTextElements = '';
     titleLines.forEach((line, idx) => {
       const lineBaselineY = titleTop + titleFontSize * 0.88 + idx * titleLineHeight;
-      titleTextElements += `<text x="${coverX.toFixed(2)}" y="${lineBaselineY.toFixed(2)}" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="900" font-size="${titleFontSize.toFixed(2)}" fill="${titleColor}">${escapeXml(line)}</text>\n      `;
+      titleTextElements += `<text x="${padX.toFixed(2)}" y="${lineBaselineY.toFixed(2)}" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="900" font-size="${titleFontSize.toFixed(2)}" fill="${titleColor}">${escapeXml(line)}</text>\n      `;
     });
 
     const titleTotalH = (titleLines.length - 1) * titleLineHeight + titleFontSize;
@@ -538,7 +569,9 @@ export async function generatePosterSvgString(
     // Fila inferior: Artista debajo del título (mt-0.5 en la plantilla)
     const spaceBetweenTitleAndArtist = (isSquarer ? 2.2 : 2.8) * baseScale;
     const artistTop = titleTop + titleTotalH + spaceBetweenTitleAndArtist;
-    const artistFontSize = (isSquarer ? 5.6 : 6.4) * baseScale;
+    const baseArtistFontSize = (isSquarer ? 5.6 : 6.4) * baseScale;
+    const artistMultiplier = album.artistFontSize ? (album.artistFontSize / 14) : 1;
+    const artistFontSize = baseArtistFontSize * artistMultiplier;
     const artistBaselineY = artistTop + artistFontSize * 0.85;
 
     const headerLayer = `
@@ -546,61 +579,66 @@ export async function generatePosterSvgString(
     <g id="Capa_Cabecera">
       ${titleTextElements}
       ${paletteSvg}
-      <text x="${coverX.toFixed(2)}" y="${artistBaselineY.toFixed(2)}" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="bold" font-size="${artistFontSize.toFixed(2)}" letter-spacing="${(0.4 * baseScale).toFixed(2)}" fill="${artistColor}">
+      <text x="${padX.toFixed(2)}" y="${artistBaselineY.toFixed(2)}" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="bold" font-size="${artistFontSize.toFixed(2)}" letter-spacing="${(0.4 * baseScale).toFixed(2)}" fill="${artistColor}">
         ${escapeXml(rawArtist)}
       </text>
     </g>`;
 
-    // 4. Línea Divisoria Horizontal Sutil (mt-2 sm:mt-1 en la plantilla)
-    const dividerGap = (isSquarer ? 4.2 : 5.0) * baseScale;
+    // 4. Línea Divisoria Horizontal Sutil (ancho completo de margen a margen)
+    const dividerGap = (isSquarer ? 5.0 : 6.2) * baseScale;
     const dividerY = artistTop + artistFontSize + dividerGap;
     const dividerLayer = `
     <!-- CAPA 4: LÍNEA DIVISORIA -->
     <g id="Capa_Linea_Divisoria">
-      <line x1="${coverX.toFixed(2)}" y1="${dividerY.toFixed(2)}" x2="${(coverX + contentW).toFixed(2)}" y2="${dividerY.toFixed(2)}" stroke="${titleColor}" stroke-width="${(0.4 * baseScale).toFixed(2)}" stroke-opacity="0.35" />
+      <line x1="${padX.toFixed(2)}" y1="${dividerY.toFixed(2)}" x2="${(padX + contentW).toFixed(2)}" y2="${dividerY.toFixed(2)}" stroke="${titleColor}" stroke-width="${(0.4 * baseScale).toFixed(2)}" stroke-opacity="0.35" />
     </g>`;
 
-    // 5. Spotify Code Centrado en la base (anclado en la base con margen optimizado)
-    const codeW = (isSquarer ? 76 : 86) * baseScale;
-    const codeH = codeW * 0.25;
-    const codeX = coverX + (contentW - codeW) / 2;
-    const bottomPad = pad * (isSquarer ? 0.65 : 0.62);
-    const codeY = height - bottomPad - codeH;
-    const scaleX = codeW / 400;
-    const scaleY = codeH / 100;
 
-    const spotifyLayer = `
-    <!-- CAPA 7: CÓDIGO SPOTIFY CENTRADO -->
-    <g id="Capa_Codigo_Spotify" transform="translate(${codeX.toFixed(2)}, ${codeY.toFixed(2)})">
-      <g transform="scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)})">
-        ${rawSpotifySvg || `<rect width="400" height="100" fill="${spotifyColor}" rx="8"/>`}
-      </g>
-    </g>`;
 
-    // 6. Tracklist en 2 Columnas (ajustado a 70% para ceder 30% al bloque de fechas)
-    const halfTracks = Math.ceil(tracks.length / 2);
-    const col1Tracks = tracks.slice(0, halfTracks);
-    const col2Tracks = tracks.slice(halfTracks);
+    // 6. Tracklist en 2 Columnas (personalizada o equilibrada 50/50, expandida hacia la derecha)
+    const defaultHalf = Math.ceil(tracks.length / 2);
+    const col1Count =
+      album.col1TrackCount !== undefined && album.col1TrackCount > 0 && album.col1TrackCount < tracks.length
+        ? album.col1TrackCount
+        : defaultHalf;
+    const col1Tracks = tracks.slice(0, col1Count);
+    const col2Tracks = tracks.slice(col1Count);
 
-    const leftColW = contentW * 0.70;
-    const colGap = 4.5 * baseScale;
+    const leftColW = contentW * 0.77;
+    // Separación limpia entre columna 1 y columna 2 (equivalente a gap-x-3.5 en la plantilla)
+    const colGap = (isSquarer ? 4.5 : 6.0) * baseScale;
     const colW = (leftColW - colGap) / 2;
-    const col1X = coverX;
-    const col2X = coverX + colW + colGap;
+    const col1X = padX;
+    const col2X = padX + colW + colGap;
 
-    const contentTopY = dividerY + (isSquarer ? 5.5 : 7.0) * baseScale;
-    const maxContentBottomY = codeY - (isSquarer ? 3.5 : 4.5) * baseScale;
-    const availableContentH = Math.max(maxContentBottomY - contentTopY, 30 * baseScale);
+    // Tipografía proporcional idéntica a la plantilla (text-[12px] sm:text-[14px])
+    const baseTrackFontSize = (tracks.length > 18
+      ? (isSquarer ? 4.6 : 5.2)
+      : tracks.length > 14
+        ? (isSquarer ? 5.2 : 5.8)
+        : tracks.length > 10
+          ? (isSquarer ? 5.8 : 6.4)
+          : (isSquarer ? 6.3 : 7.0)) * baseScale;
+    const trackMultiplier = album.tracklistFontSize ? (album.tracklistFontSize / 13) : 1;
+    const trackFontSize = baseTrackFontSize * trackMultiplier;
+    const trackLineSpacing = trackFontSize * 1.20;
+
+    // Altura de mayúsculas (capitales) para centrar la línea exactamente entre el artista y el inicio del texto
+    const trackCapHeight = trackFontSize * 0.82;
+    // Margen inferior bajo la línea idéntico al margen superior (dividerGap)
+    const contentTopY = dividerY + dividerGap + trackCapHeight;
+    const bottomTrackLimitY = height - padBottom;
+    const availableTrackH = bottomTrackLimitY - contentTopY;
     const maxTracksInCol = Math.max(col1Tracks.length, col2Tracks.length, 1);
 
-    // Tipografía proporcional calibrada (se auto-ajusta suavemente si hay más de 14 pistas)
-    const trackFontSize = (tracks.length > 14 ? 3.9 : tracks.length > 10 ? 4.5 : 5.0) * baseScale;
-    const trackLineSpacing = trackFontSize * 1.20;
+    // Espaciado dinámico vertical para aprovechar el alto disponible de las columnas
+    const maxEstimatedH = maxTracksInCol * (trackLineSpacing * 1.22);
+    const remainingH = Math.max(0, availableTrackH - maxEstimatedH);
     const trackItemGap = Math.max(
-      0.8 * baseScale,
+      1.2 * baseScale,
       Math.min(
-        trackFontSize * 0.45,
-        (availableContentH - maxTracksInCol * trackLineSpacing) / Math.max(maxTracksInCol, 1)
+        trackFontSize * 0.50,
+        remainingH / Math.max(maxTracksInCol, 1)
       )
     );
 
@@ -610,12 +648,11 @@ export async function generatePosterSvgString(
 
       items.forEach((t) => {
         const rawTrackTitle = t.title || '';
-        // Ancho ajustado para la columna de 70%
-        const maxChars = isSquarer ? 22 : 25;
+        // Ancho ampliado para títulos más largos antes de saltar de línea
+        const maxChars = isSquarer ? 23 : 26;
         const lines = wrapText(rawTrackTitle, maxChars);
         const numLabel = `${t.number}. `;
-        // Sangría calculada con margen amplio para que el punto '.' quede 100% visible y separado
-        const numIndent = (t.number > 9 ? 8.6 : 6.6) * baseScale;
+        const numIndent = (t.number > 9 ? 9.5 : 7.5) * baseScale;
 
         lines.forEach((line, lineIdx) => {
           if (lineIdx === 0) {
@@ -655,29 +692,38 @@ export async function generatePosterSvgString(
     const formattedDate = album.releaseDate ? formatReleaseDate(album.releaseDate) : '';
     const formattedDuration = album.totalDuration || calculateTotalDurationFromTracks(tracks) || '';
 
-    const metaRightX = coverX + contentW;
+    const releaseDateColor = album.releaseDateColor || titleColor;
+    const releaseDateLabelColor = album.releaseDateColor || artistColor;
+    const durationColor = album.durationColor || titleColor;
+    const durationLabelColor = album.durationColor || artistColor;
+
+    const metaRightX = padX + contentW;
     let metaCurrentY = contentTopY;
-    const metaLabelSize = (isSquarer ? 3.8 : 4.4) * baseScale;
-    const metaValueSize = (isSquarer ? 6.2 : 7.2) * baseScale;
+    const metaMultiplier = (album.metadataFontSize ?? 12) / 12;
+    const metaLabelSize = (isSquarer ? 3.9 : 4.4) * baseScale * metaMultiplier * 0.78;
+    const metaValueSize = (isSquarer ? 6.2 : 7.2) * baseScale * metaMultiplier;
 
     let metadataItems = '';
+    let lastMetaBottomY = contentTopY;
     if (formattedDate) {
-      const labelBaselineY = metaCurrentY + metaLabelSize * 0.85;
+      const labelBaselineY = metaCurrentY;
       const valueBaselineY = labelBaselineY + metaValueSize * 1.25;
       metadataItems += `
-      <text x="${metaRightX.toFixed(2)}" y="${labelBaselineY.toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="bold" font-size="${metaLabelSize.toFixed(2)}" letter-spacing="${(0.5 * baseScale).toFixed(2)}" fill="${artistColor}" opacity="0.65">RELEASE DATE</text>
-      <text x="${metaRightX.toFixed(2)}" y="${valueBaselineY.toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="900" font-size="${metaValueSize.toFixed(2)}" fill="${titleColor}">${escapeXml(formattedDate)}</text>
+      <text x="${metaRightX.toFixed(2)}" y="${labelBaselineY.toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="bold" font-size="${metaLabelSize.toFixed(2)}" letter-spacing="${(0.5 * baseScale).toFixed(2)}" fill="${releaseDateLabelColor}" opacity="0.65">RELEASE DATE</text>
+      <text x="${metaRightX.toFixed(2)}" y="${valueBaselineY.toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="900" font-size="${metaValueSize.toFixed(2)}" fill="${releaseDateColor}">${escapeXml(formattedDate)}</text>
       `;
-      metaCurrentY = valueBaselineY + (isSquarer ? 7.0 : 8.5) * baseScale;
+      metaCurrentY = valueBaselineY + (isSquarer ? 6.5 : 8.0) * baseScale;
+      lastMetaBottomY = valueBaselineY;
     }
 
     if (formattedDuration) {
-      const labelBaselineY = metaCurrentY + metaLabelSize * 0.85;
+      const labelBaselineY = metaCurrentY;
       const valueBaselineY = labelBaselineY + metaValueSize * 1.25;
       metadataItems += `
-      <text x="${metaRightX.toFixed(2)}" y="${labelBaselineY.toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="bold" font-size="${metaLabelSize.toFixed(2)}" letter-spacing="${(0.5 * baseScale).toFixed(2)}" fill="${artistColor}" opacity="0.65">ALBUM LENGTH</text>
-      <text x="${metaRightX.toFixed(2)}" y="${valueBaselineY.toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="900" font-size="${metaValueSize.toFixed(2)}" fill="${titleColor}">${escapeXml(formattedDuration)}</text>
+      <text x="${metaRightX.toFixed(2)}" y="${labelBaselineY.toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="bold" font-size="${metaLabelSize.toFixed(2)}" letter-spacing="${(0.5 * baseScale).toFixed(2)}" fill="${durationLabelColor}" opacity="0.65">ALBUM LENGTH</text>
+      <text x="${metaRightX.toFixed(2)}" y="${valueBaselineY.toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="900" font-size="${metaValueSize.toFixed(2)}" fill="${durationColor}">${escapeXml(formattedDuration)}</text>
       `;
+      lastMetaBottomY = valueBaselineY;
     }
 
     const metadataLayer = `
@@ -686,15 +732,37 @@ export async function generatePosterSvgString(
       ${metadataItems}
     </g>`;
 
+    // 8. Spotify Code directamente debajo de Album Length (sin espacio vacío excesivo)
+    const baseCodeW = (isSquarer ? 54 : 60) * baseScale;
+    const codeMultiplier = (album.spotifyCodeSize ?? 30) / 24;
+    const codeW = baseCodeW * codeMultiplier;
+    const codeH = codeW * 0.25;
+    const codeX = padX + contentW - codeW;
+    const spotifyGap = (isSquarer ? 4.5 : 6.0) * baseScale;
+    const codeY = (formattedDate || formattedDuration)
+      ? lastMetaBottomY + spotifyGap
+      : contentTopY;
+    const scaleX = codeW / 400;
+    const scaleY = codeH / 100;
+
+    const spotifyLayer = `
+    <!-- CAPA 7: CÓDIGO SPOTIFY JUSTO DEBAJO DE LOS METADATOS -->
+    <g id="Capa_Codigo_Spotify" transform="translate(${codeX.toFixed(2)}, ${codeY.toFixed(2)})">
+      <g transform="scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)})">
+        ${rawSpotifySvg || `<rect width="400" height="100" fill="${spotifyColor}" rx="8"/>`}
+      </g>
+    </g>`;
+
     layersXml = `${bgLayer}\n${coverLayer}\n${headerLayer}\n${dividerLayer}\n${tracklistLayer}\n${metadataLayer}\n${spotifyLayer}`;
   } else {
     // --- PLANTILLA SONG PLAYER ---
     const player = config.player;
-    const pad = width * (isSquarer ? 0.055 : 0.075);
+    const pad = width * 0.065;
+    const padTop = width * (isUltraSquarer ? 0.025 : isSquarer ? 0.045 : 0.07);
     const photoW = width - 2 * pad;
     const photoH = photoW;
     const photoX = pad;
-    const photoY = pad;
+    const photoY = padTop;
     const baseScale = photoW / 249.48;
 
     onProgress?.('Descargando trazados vectoriales de Spotify...');
@@ -730,7 +798,8 @@ export async function generatePosterSvgString(
     const playerArtistSize = 5.2 * baseScale;
 
     // Spotify Code alineado a la derecha de Título y Artista
-    const codeW = 68 * baseScale;
+    const codeMultiplier = player.spotifyCodeSize ? (player.spotifyCodeSize / 40) : 1;
+    const codeW = 88 * baseScale * codeMultiplier;
     const codeH = codeW * 0.25;
     const codeX = width - pad - codeW;
     const codeY = contentStartY - 6.5 * baseScale;
@@ -750,84 +819,78 @@ export async function generatePosterSvgString(
       <text x="${pad.toFixed(2)}" y="${(contentStartY + 6.8 * baseScale).toFixed(2)}" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="600" font-size="${playerArtistSize.toFixed(2)}" fill="${artistColor}" opacity="0.85">${escapeXml(player.artist || 'Artista')}</text>
     </g>`;
 
-    // Barra de reproducción y tiempos
-    const barY = contentStartY + 16.5 * baseScale;
-    const barW = width - 2 * pad;
-    const progressPercent = Math.min(1, Math.max(0, (player.progressPercent || 30) / 100));
-    const fillW = barW * progressPercent;
-    const playerTimeSize = 3.6 * baseScale;
+    // Línea de progreso de reproducción
+    const barY = contentStartY + 14 * baseScale;
+    const barH = 1.2 * baseScale;
+    const progressWidth = (photoW * (player.progressPercent || 0)) / 100;
 
     const progressLayer = `
     <g id="Capa_Barra_Progreso">
-      <!-- Barra fondo -->
-      <rect x="${pad.toFixed(2)}" y="${barY.toFixed(2)}" width="${barW.toFixed(2)}" height="${(1.8 * baseScale).toFixed(2)}" rx="${(0.9 * baseScale).toFixed(2)}" fill="${titleColor}" opacity="0.2" />
-      <!-- Barra activa -->
-      <rect x="${pad.toFixed(2)}" y="${barY.toFixed(2)}" width="${fillW.toFixed(2)}" height="${(1.8 * baseScale).toFixed(2)}" rx="${(0.9 * baseScale).toFixed(2)}" fill="${titleColor}" />
-      <!-- Perilla circular -->
-      <circle cx="${(pad + fillW).toFixed(2)}" cy="${(barY + 0.9 * baseScale).toFixed(2)}" r="${(2.2 * baseScale).toFixed(2)}" fill="${titleColor}" />
-      <!-- Tiempos -->
-      <text x="${pad.toFixed(2)}" y="${(barY + 6.2 * baseScale).toFixed(2)}" font-family="'Montserrat', 'Inter', monospace" font-weight="500" font-size="${playerTimeSize.toFixed(2)}" fill="${artistColor}" opacity="0.8">${escapeXml(player.currentTime || '0:58')}</text>
-      <text x="${(pad + barW).toFixed(2)}" y="${(barY + 6.2 * baseScale).toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', monospace" font-weight="500" font-size="${playerTimeSize.toFixed(2)}" fill="${artistColor}" opacity="0.8">${escapeXml(player.totalTime || '3:27')}</text>
+      <rect x="${pad.toFixed(2)}" y="${barY.toFixed(2)}" width="${photoW.toFixed(2)}" height="${barH.toFixed(2)}" rx="${(barH / 2).toFixed(2)}" fill="${titleColor}" opacity="0.25" />
+      <rect x="${pad.toFixed(2)}" y="${barY.toFixed(2)}" width="${progressWidth.toFixed(2)}" height="${barH.toFixed(2)}" rx="${(barH / 2).toFixed(2)}" fill="${titleColor}" />
+      <circle cx="${(pad + progressWidth).toFixed(2)}" cy="${(barY + barH / 2).toFixed(2)}" r="${(1.6 * baseScale).toFixed(2)}" fill="${titleColor}" />
+      <text x="${pad.toFixed(2)}" y="${(barY + 6.0 * baseScale).toFixed(2)}" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="600" font-size="${(4.8 * baseScale).toFixed(2)}" fill="${artistColor}" opacity="0.9">${escapeXml(player.currentTime || '0:58')}</text>
+      <text x="${(width - pad).toFixed(2)}" y="${(barY + 6.0 * baseScale).toFixed(2)}" text-anchor="end" font-family="'Montserrat', 'Inter', Helvetica, Arial, sans-serif" font-weight="600" font-size="${(4.8 * baseScale).toFixed(2)}" fill="${artistColor}" opacity="0.9">${escapeXml(player.totalTime || '3:27')}</text>
     </g>`;
 
     // Controles de reproducción vectoriales
-    const controlsY = barY + 16.5 * baseScale;
+    const controlsY = barY + (isUltraSquarer ? 15.0 : 16.5) * baseScale;
     const iconColor = titleColor;
     const isPlaying = player.isPlaying !== false;
-    const circleRadius = 7.5 * baseScale;
+    const circleRadius = (isSquarer ? 8.5 : 9.5) * baseScale;
     const centerX = width / 2;
 
-    const isLightBg =
-      bgColor === '#FFFFFF' ||
-      bgColor.toLowerCase() === '#fff' ||
-      bgColor.toLowerCase() === 'white' ||
-      (bgColor.startsWith('#') &&
-        bgColor.length === 7 &&
-        parseInt(bgColor.slice(1, 3), 16) * 0.299 +
-        parseInt(bgColor.slice(3, 5), 16) * 0.587 +
-        parseInt(bgColor.slice(5, 7), 16) * 0.114 >
-        180);
-    const circleInnerColor = isLightBg ? '#FFFFFF' : '#000000';
+    const getContrastColor = (hexColor: string) => {
+      if (!hexColor) return '#000000';
+      const clean = hexColor.replace('#', '');
+      if (clean.length === 3) {
+        const r = parseInt(clean[0] + clean[0], 16);
+        const g = parseInt(clean[1] + clean[1], 16);
+        const b = parseInt(clean[2] + clean[2], 16);
+        return (r * 299 + g * 587 + b * 114) >= 128 ? '#000000' : '#FFFFFF';
+      }
+      if (clean.length === 6) {
+        const r = parseInt(clean.slice(0, 2), 16);
+        const g = parseInt(clean.slice(2, 4), 16);
+        const b = parseInt(clean.slice(4, 6), 16);
+        return (r * 299 + g * 587 + b * 114) >= 128 ? '#000000' : '#FFFFFF';
+      }
+      return '#000000';
+    };
+
+    const circleInnerColor = getContrastColor(titleColor);
 
     const controlsLayer = `
     <g id="Capa_Controles_Reproduccion">
       <!-- 1. Shuffle (Izquierda extrema) -->
-      <g transform="translate(${(pad + 2 * baseScale).toFixed(2)}, ${(controlsY - 4 * baseScale).toFixed(2)}) scale(${(0.35 * baseScale).toFixed(3)})">
+      <g transform="translate(${(pad + 2 * baseScale).toFixed(2)}, ${(controlsY - 4.5 * baseScale).toFixed(2)}) scale(${(0.42 * baseScale).toFixed(3)})">
         <path d="M16 3h5v5 M4 20L21 3 M21 16v5h-5 M15 15l6 6 M4 4l5 5" fill="none" stroke="${iconColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       </g>
 
-      <!-- 2. Skip Back (Izquierda) -->
-      <g transform="translate(${(centerX - 24 * baseScale).toFixed(2)}, ${(controlsY - 4.5 * baseScale).toFixed(2)}) scale(${(0.38 * baseScale).toFixed(3)})">
+      <!-- 2. Skip Back (Izquierda, bien separado del Play) -->
+      <g transform="translate(${(centerX - 38 * baseScale).toFixed(2)}, ${(controlsY - 5.5 * baseScale).toFixed(2)}) scale(${(0.45 * baseScale).toFixed(3)})">
         <polygon points="19 20 9 12 19 4 19 20" fill="${iconColor}"/>
         <line x1="5" y1="19" x2="5" y2="5" stroke="${iconColor}" stroke-width="3" stroke-linecap="round"/>
       </g>
 
-      <!-- 3. Botón Central Circular de Play/Pausa -->
+      <!-- 3. Botón Central Circular de Play/Pausa (Centrado al 50%) -->
       <circle cx="${centerX.toFixed(2)}" cy="${controlsY.toFixed(2)}" r="${circleRadius.toFixed(2)}" fill="${titleColor}" />
       ${isPlaying
         ? `<!-- Icono Pausa (||) perfectamente simétrico -->
-             <rect x="${(centerX - 2.5 * baseScale).toFixed(2)}" y="${(controlsY - 3.8 * baseScale).toFixed(2)}" width="${(1.8 * baseScale).toFixed(2)}" height="${(7.6 * baseScale).toFixed(2)}" rx="${(0.5 * baseScale).toFixed(2)}" fill="${circleInnerColor}" />
-             <rect x="${(centerX + 0.7 * baseScale).toFixed(2)}" y="${(controlsY - 3.8 * baseScale).toFixed(2)}" width="${(1.8 * baseScale).toFixed(2)}" height="${(7.6 * baseScale).toFixed(2)}" rx="${(0.5 * baseScale).toFixed(2)}" fill="${circleInnerColor}" />`
+             <rect x="${(centerX - 3.0 * baseScale).toFixed(2)}" y="${(controlsY - 4.5 * baseScale).toFixed(2)}" width="${(2.0 * baseScale).toFixed(2)}" height="${(9.0 * baseScale).toFixed(2)}" rx="${(0.6 * baseScale).toFixed(2)}" fill="${circleInnerColor}" />
+             <rect x="${(centerX + 1.0 * baseScale).toFixed(2)}" y="${(controlsY - 4.5 * baseScale).toFixed(2)}" width="${(2.0 * baseScale).toFixed(2)}" height="${(9.0 * baseScale).toFixed(2)}" rx="${(0.6 * baseScale).toFixed(2)}" fill="${circleInnerColor}" />`
         : `<!-- Icono Play (▶) matemáticamente centrado -->
-             <polygon points="${(centerX - 2.2 * baseScale).toFixed(2)},${(controlsY - 3.8 * baseScale).toFixed(2)} ${(centerX + 3.8 * baseScale).toFixed(2)},${controlsY.toFixed(2)} ${(centerX - 2.2 * baseScale).toFixed(2)},${(controlsY + 3.8 * baseScale).toFixed(2)}" fill="${circleInnerColor}" />`
+             <polygon points="${(centerX - 2.8 * baseScale).toFixed(2)},${(controlsY - 4.8 * baseScale).toFixed(2)} ${(centerX + 4.8 * baseScale).toFixed(2)},${controlsY.toFixed(2)} ${(centerX - 2.8 * baseScale).toFixed(2)},${(controlsY + 4.8 * baseScale).toFixed(2)}" fill="${circleInnerColor}" />`
       }
 
-      <!-- 4. Skip Forward (Derecha) -->
-      <g transform="translate(${(centerX + 15 * baseScale).toFixed(2)}, ${(controlsY - 4.5 * baseScale).toFixed(2)}) scale(${(0.38 * baseScale).toFixed(3)})">
+      <!-- 4. Skip Forward (Derecha, bien separado del Play) -->
+      <g transform="translate(${(centerX + 29 * baseScale).toFixed(2)}, ${(controlsY - 5.5 * baseScale).toFixed(2)}) scale(${(0.45 * baseScale).toFixed(3)})">
         <polygon points="5 4 15 12 5 20 5 4" fill="${iconColor}"/>
         <line x1="19" y1="5" x2="19" y2="19" stroke="${iconColor}" stroke-width="3" stroke-linecap="round"/>
       </g>
 
-      <!-- 5. Repeat (Derecha) -->
-      <g transform="translate(${(width - pad - 18 * baseScale).toFixed(2)}, ${(controlsY - 4 * baseScale).toFixed(2)}) scale(${(0.35 * baseScale).toFixed(3)})">
-        <polyline points="17 1 21 5 17 9" fill="none" stroke="${iconColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M3 11V9a4 4 0 0 1 4-4h14" fill="none" stroke="${iconColor}" stroke-width="2.2" stroke-linecap="round"/>
-        <polyline points="7 23 3 19 7 15" fill="none" stroke="${iconColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M21 13v2a4 4 0 0 1-4 4H3" fill="none" stroke="${iconColor}" stroke-width="2.2" stroke-linecap="round"/>
-      </g>
-
-      <!-- 6. Heart (Extremo Derecho) -->
-      <g transform="translate(${(width - pad - 8 * baseScale).toFixed(2)}, ${(controlsY - 4 * baseScale).toFixed(2)}) scale(${(0.35 * baseScale).toFixed(3)})">
+      <!-- 5. Heart (Extremo Derecho Simétrico a Shuffle) -->
+      <g transform="translate(${(width - pad - 6 * baseScale).toFixed(2)}, ${(controlsY - 4.5 * baseScale).toFixed(2)}) scale(${(0.42 * baseScale).toFixed(3)})">
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" ${player.isLiked ? `fill="${titleColor}"` : 'fill="none"'} stroke="${iconColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       </g>
     </g>`;
@@ -840,8 +903,9 @@ export async function generatePosterSvgString(
         : ['#D6C6B6', '#B0A296', '#696058', '#403A36', '#1E1B19']
       ).slice(0, 5);
 
-      const paletteY = height - pad - (isSquarer ? 4.5 : 5.5) * baseScale;
-      const swatchH = (isSquarer ? 4.5 : 5.5) * baseScale;
+      const paletteMultiplier = player.paletteSize ? (player.paletteSize / 14) : 1;
+      const swatchH = (isSquarer ? 4.5 : 5.5) * baseScale * paletteMultiplier;
+      const paletteY = height - pad - (isUltraSquarer ? 6.5 : isSquarer ? 5.5 : 5.5) * baseScale;
       const swatchGap = (isSquarer ? 2.2 : 2.8) * baseScale;
       const totalAvailableW = width - 2 * pad;
       const swatchW = (totalAvailableW - (paletteColors.length - 1) * swatchGap) / paletteColors.length;
