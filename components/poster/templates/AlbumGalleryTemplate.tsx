@@ -36,8 +36,8 @@ export const AlbumGalleryTemplate: React.FC<AlbumGalleryTemplateProps> = ({
   };
 
   const tracks = album.tracks || [];
-  const isUltraSquarer = printSize.aspectRatioRatio >= 0.81; // Ej: 24.8x29.8 cm (0.832)
-  const isSquarerFormat = printSize.aspectRatioRatio >= 0.74; // Formato más cuadrado: 30x40 cm (0.75) vs Serie A ISO (0.707)
+  const isUltraSquarer = printSize.aspectRatioRatio >= 0.81; // Ej: formatos cuadrados como 30x30 o 50x50
+  const isSquarerFormat = printSize.aspectRatioRatio >= 0.74; // Formato más cuadrado: 23x30 (0.767), 29.8x39.8 (0.75)
   const needsCompactCover = tracks.length > 14 && isSquarerFormat;
 
   // Límite seguro de canciones en 1 columna antes de pasar a 2 columnas
@@ -223,20 +223,26 @@ export const AlbumGalleryTemplate: React.FC<AlbumGalleryTemplateProps> = ({
 
           {/* Bloque Superior: Información del Álbum */}
           <div className="w-full flex flex-col items-end text-right">
-            {/* Paleta de Colores del Álbum (5 Cuadros de color sólido) */}
+            {/* Paleta de Colores del Álbum (5 Cuadros con sombra y borde configurable) */}
             {album.showPalette !== false && album.palette && album.palette.length > 0 && (
               <div className="flex items-center justify-end gap-1.5 sm:gap-2 mb-2 sm:mb-2.5">
                 {album.palette.slice(0, 5).map((colorHex, idx) => {
-                  const size = album.paletteSize ?? 32;
+                  const size = album.paletteSize ?? 24;
+                  const hasBorder = album.paletteBorder !== false;
+                  const borderColor = album.paletteBorderColor || '#FFFFFF';
+
                   return (
                     <div
                       key={`${colorHex}-${idx}`}
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 rounded-[3px] transition-transform duration-200"
                       style={{
                         backgroundColor: colorHex,
                         width: `${size}px`,
                         height: `${size}px`,
+                        border: hasBorder ? `1.5px solid ${borderColor}` : 'none',
+                        boxShadow: '0 2px 5px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.25)',
                       }}
+                      title={colorHex}
                     />
                   );
                 })}

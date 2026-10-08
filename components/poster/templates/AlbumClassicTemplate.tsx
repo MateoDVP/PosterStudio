@@ -35,8 +35,8 @@ export const AlbumClassicTemplate: React.FC<AlbumClassicTemplateProps> = ({
   };
 
   const tracks = album.tracks || [];
-  const isUltraSquarer = printSize.aspectRatioRatio >= 0.81; // Ej: 24.8x29.8 cm (ratio ~0.832)
-  const isSquarerFormat = printSize.aspectRatioRatio >= 0.74; // Ej: 29.8x39.8, 39.8x49.8
+  const isUltraSquarer = printSize.aspectRatioRatio >= 0.81; // Ej: formatos cuadrados como 30x30 o 50x50
+  const isSquarerFormat = printSize.aspectRatioRatio >= 0.74; // Ej: 23x30 (ratio ~0.767), 29.8x39.8, 39.8x49.8
   const needsCompactCover = tracks.length > 14 && isSquarerFormat;
 
   // Repartir pistas de manera equilibrada en 2 columnas o personalizada por el usuario
@@ -141,16 +141,22 @@ export const AlbumClassicTemplate: React.FC<AlbumClassicTemplateProps> = ({
             </h1>
 
             {album.showPalette !== false && album.palette && album.palette.length > 0 && (
-              <div className="flex items-center flex-shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 {album.palette.slice(0, 5).map((colorHex, idx) => {
-                  const pSize = album.paletteSize ?? 32;
+                  const pSize = album.paletteSize ?? 24;
+                  const hasBorder = album.paletteBorder !== false;
+                  const borderColor = album.paletteBorderColor || '#FFFFFF';
+
                   return (
                     <div
                       key={`${colorHex}-${idx}`}
+                      className="flex-shrink-0 rounded-[3px] transition-transform duration-200"
                       style={{
                         backgroundColor: colorHex,
                         width: `${pSize}px`,
-                        height: `${Math.round(pSize * 0.5)}px`,
+                        height: `${pSize}px`,
+                        border: hasBorder ? `1.5px solid ${borderColor}` : 'none',
+                        boxShadow: '0 2px 5px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.25)',
                       }}
                       title={colorHex}
                     />

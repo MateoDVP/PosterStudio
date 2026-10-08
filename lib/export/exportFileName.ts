@@ -1,4 +1,5 @@
 import { PosterConfig, PrintSize } from '@/types/poster';
+import { getBasePrintSize } from '@/lib/constants/printSizes';
 
 /**
  * Convierte un texto a PascalCase sin espacios, eliminando caracteres no permitidos:
@@ -20,22 +21,33 @@ function toPascalCaseNoSpaces(str: string): string {
 
 /**
  * Genera el nombre de archivo sin espacios separado por guiones bajos:
- * Ejemplo: "WishYouWereHere_PinkFloyd_50x70"
- *          "ItBeckonsUsAll_Darkthrone_A3"
+ * Ejemplo: "WishYouWereHere_PinkFloyd_29.8x39.8cm"
+ *          "WishYouWereHere_PinkFloyd_MDF_29.8x39.8cm_(Impresion_33.8x43.8cm)"
  */
 export function getExportBaseFileName(config: PosterConfig, printSize: PrintSize): string {
   const isSong = config.template === 'song-player';
   const rawTitle = (isSong ? config.player.title : config.album.title)?.trim() || (isSong ? 'Cancion' : 'Album');
   const rawArtist = (isSong ? config.player.artist : config.album.artist)?.trim() || 'Artista';
 
-  // Formato limpio del tamaño sin espacios: ej. 24.8x29.8cm, 29.8x39.8cm, 39.8x49.8cm, 49.8x69.8cm o personalizado
-  const sizeLabel =
-    printSize.id === 'custom'
-      ? `${printSize.widthMm / 10}x${printSize.heightMm / 10}cm`
-      : `${printSize.id}cm`;
+  let sizeLabel = '';
+  if (config.finishType === 'mdf') {
+    const baseSize = getBasePrintSize(config);
+    const baseLabel =
+      baseSize.id === 'custom'
+        ? `${baseSize.widthMm / 10}x${baseSize.heightMm / 10}cm`
+        : `${baseSize.id}cm`;
+    const sheetLabel = `${(printSize.widthMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })}x${(printSize.heightMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })}cm`;
+    sizeLabel = `MDF_${baseLabel}_(Impresion_${sheetLabel})`;
+  } else {
+    sizeLabel =
+      printSize.id === 'custom'
+        ? `${(printSize.widthMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })}x${(printSize.heightMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })}cm`
+        : `${printSize.id}cm`;
+  }
 
   const cleanTitle = toPascalCaseNoSpaces(rawTitle) || (isSong ? 'Cancion' : 'Album');
   const cleanArtist = toPascalCaseNoSpaces(rawArtist) || 'Artista';
 
   return `${cleanTitle}_${cleanArtist}_${sizeLabel}`;
 }
+

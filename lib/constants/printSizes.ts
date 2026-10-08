@@ -1,4 +1,10 @@
-import { PrintSize, PrintSizeKey, PresetPrintSizeKey, CustomSizeConfig } from '@/types/poster';
+import {
+  PrintSize,
+  PrintSizeKey,
+  PresetPrintSizeKey,
+  CustomSizeConfig,
+  FinishType,
+} from '@/types/poster';
 
 /**
  * High-Resolution 300 DPI Physical Print Specifications
@@ -6,16 +12,16 @@ import { PrintSize, PrintSizeKey, PresetPrintSizeKey, CustomSizeConfig } from '@
  * 1 cm = 10 mm
  */
 export const PRINT_SIZES: Record<PresetPrintSizeKey, PrintSize> = {
-  '24.8x29.8': {
-    id: '24.8x29.8',
-    name: '24.8 × 29.8 cm',
+  '23x30': {
+    id: '23x30',
+    name: '23 × 30 cm',
     category: 'Poster Art',
-    widthMm: 248,
-    heightMm: 298,
-    widthPx300Dpi: 2929,
-    heightPx300Dpi: 3520,
-    aspectRatioClass: 'aspect-[248/298]',
-    aspectRatioRatio: 248 / 298,
+    widthMm: 230,
+    heightMm: 300,
+    widthPx300Dpi: 2717,
+    heightPx300Dpi: 3543,
+    aspectRatioClass: 'aspect-[23/30]',
+    aspectRatioRatio: 230 / 300,
   },
   '29.8x39.8': {
     id: '29.8x39.8',
@@ -53,7 +59,7 @@ export const PRINT_SIZES: Record<PresetPrintSizeKey, PrintSize> = {
 };
 
 export const PRESET_PRINT_SIZE_KEYS: PresetPrintSizeKey[] = [
-  '24.8x29.8',
+  '23x30',
   '29.8x39.8',
   '39.8x49.8',
   '49.8x69.8',
@@ -65,6 +71,8 @@ export const DEFAULT_CUSTOM_SIZE: CustomSizeConfig = {
   widthCm: 29.8,
   heightCm: 39.8,
 };
+
+export const DEFAULT_MDF_BLEED_CM = 2; // 2 cm por cada lado para doblar sobre el canto del MDF
 
 /**
  * Genera una especificación PrintSize dinámica a partir de medidas en centímetros
@@ -91,9 +99,9 @@ export function createCustomPrintSize(widthCm: number, heightCm: number): PrintS
 }
 
 /**
- * Resuelve el PrintSize activo considerando tanto formatos predefinidos como personalizados
+ * Resuelve el tamaño base del póster (la medida del marco o de la cara frontal de la tabla MDF)
  */
-export function getActivePrintSize(config: {
+export function getBasePrintSize(config: {
   sizeKey: PrintSizeKey;
   customSize?: CustomSizeConfig;
 }): PrintSize {
@@ -105,3 +113,76 @@ export function getActivePrintSize(config: {
   }
   return PRINT_SIZES[config.sizeKey as PresetPrintSizeKey] || PRINT_SIZES[DEFAULT_PRINT_SIZE];
 }
+
+export interface ResolvedPrintDimensions {
+  baseSize: PrintSize; // Medida física de la tabla MDF o del marco
+  sheetSize: PrintSize; // Medida total de la lámina a imprimir (incluyendo sangrado si es MDF)
+  isMdf: boolean;
+  bleedCm: number;
+  bleedMm: number;
+}
+
+/**
+ * Devuelve tanto las dimensiones de la madera/marco como las dimensiones totales de la lámina
+ */
+export function getResolvedPrintDimensions(config: {
+  sizeKey: PrintSizeKey;
+  customSize?: CustomSizeConfig;
+  finishType?: FinishType;
+  mdfBleedCm?: number;
+}): ResolvedPrintDimensions {
+  const baseSize = getBasePrintSize(config);
+  const isMdf = config.finishType === 'mdf';
+  const bleedCm = isMdf ? (config.mdfBleedCm ?? DEFAULT_MDF_BLEED_CM) : 0;
+  const bleedMm = Math.round(bleedCm * 10);
+
+  if (!isMdf || bleedMm <= 0) {
+    return {
+      baseSize,
+      sheetSize: baseSize,
+      isMdf: false,
+      bleedCm: 0,
+      bleedMm: 0,
+    };
+  }
+
+  const sheetWidthMm = baseSize.widthMm + bleedMm * 2;
+  const sheetHeightMm = baseSize.heightMm + bleedMm * 2;
+  const widthPx300Dpi = Math.round((sheetWidthMm / 25.4) * 300);
+  const heightPx300Dpi = Math.round((sheetHeightMm / 25.4) * 300);
+
+  const sheetSize: PrintSize = {
+    id: baseSize.id,
+    name: `MDF ${baseSize.name} (+${bleedCm}cm sangrado)`,
+    category: 'Personalizado',
+    widthMm: sheetWidthMm,
+    heightMm: sheetHeightMm,
+    widthPx300Dpi,
+    heightPx300Dpi,
+    aspectRatioClass: `aspect-[${sheetWidthMm}/${sheetHeightMm}]`,
+    aspectRatioRatio: sheetWidthMm / sheetHeightMm,
+  };
+
+  return {
+    baseSize,
+    sheetSize,
+    isMdf: true,
+    bleedCm,
+    bleedMm,
+  };
+}
+
+/**
+ * Resuelve el PrintSize activo.
+ * Si es acabado MDF, devuelve las dimensiones totales de la lámina de impresión física (con 2 cm de sangrado por lado).
+ * Si es marco tradicional, devuelve las dimensiones del marco.
+ */
+export function getActivePrintSize(config: {
+  sizeKey: PrintSizeKey;
+  customSize?: CustomSizeConfig;
+  finishType?: FinishType;
+  mdfBleedCm?: number;
+}): PrintSize {
+  return getResolvedPrintDimensions(config).sheetSize;
+}
+

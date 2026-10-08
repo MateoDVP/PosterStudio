@@ -1,4 +1,4 @@
-export type PresetPrintSizeKey = '24.8x29.8' | '29.8x39.8' | '39.8x49.8' | '49.8x69.8';
+export type PresetPrintSizeKey = '23x30' | '29.8x39.8' | '39.8x49.8' | '49.8x69.8';
 export type PrintSizeKey = PresetPrintSizeKey | 'custom';
 
 export interface CustomSizeConfig {
@@ -55,6 +55,8 @@ export interface AlbumData {
   metadataFontSize?: number; // Tamaño numérico de fecha y duración en px (etiquetas se escalan proporcionalmente)
   spotifyCodeSize?: number; // Altura numérica del código Spotify en px
   paletteSize?: number; // Tamaño numérico de los cuadros/muestras de la paleta en px
+  paletteBorder?: boolean; // Alternar si los cuadros de paleta tienen borde exterior (por defecto true)
+  paletteBorderColor?: string; // Color del borde exterior de los cuadros (por defecto '#FFFFFF')
 }
 
 export interface PlayerData {
@@ -80,10 +82,16 @@ export interface PlayerData {
   artistFontSize?: number; // Tamaño numérico del artista en px
   spotifyCodeSize?: number; // Altura numérica del código Spotify en px
   paletteSize?: number; // Tamaño numérico / altura de los rectángulos de la paleta en px
+  paletteBorder?: boolean; // Alternar si los cuadros de paleta tienen borde exterior (por defecto true)
+  paletteBorderColor?: string; // Color del borde exterior de los cuadros (por defecto '#FFFFFF')
 }
+
+export type FinishType = 'frame' | 'mdf';
 
 export interface PosterConfig {
   template: TemplateType;
+  finishType?: FinishType; // 'frame' (Cuadro con Marco) | 'mdf' (Retablo MDF con sangrado)
+  mdfBleedCm?: number; // Sangrado perimetral por cada lado en cm (por defecto 2)
   sizeKey: PrintSizeKey;
   customSize?: CustomSizeConfig;
   backgroundColor: string; // default "#FFFFFF"

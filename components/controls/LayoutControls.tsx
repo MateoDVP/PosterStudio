@@ -8,6 +8,8 @@ import {
   PRESET_PRINT_SIZE_KEYS,
   DEFAULT_CUSTOM_SIZE,
   getActivePrintSize,
+  getBasePrintSize,
+  getResolvedPrintDimensions,
 } from '@/lib/constants/printSizes';
 import { ColorPickerPopover } from '@/components/ui/ColorPickerPopover';
 import { DEFAULT_PALETTE } from '@/lib/colorPalette';
@@ -22,6 +24,9 @@ import {
   ChevronDown,
   Sliders,
   ArrowLeftRight,
+  Frame,
+  Box,
+  Info,
 } from 'lucide-react';
 
 interface LayoutControlsProps {
@@ -160,12 +165,14 @@ const CustomSizeEditor: React.FC<CustomSizeEditorProps> = ({
     }));
   };
 
+  const isMdf = config.finishType === 'mdf';
+
   return (
     <div className="mt-2 p-3 rounded-xl bg-neutral-900/80 border border-neutral-800 space-y-3 shadow-inner">
       <div className="grid grid-cols-2 gap-2.5">
         <div>
           <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
-            Ancho (cm)
+            {isMdf ? 'Ancho Tabla MDF (cm)' : 'Ancho (cm)'}
           </label>
           <div className="relative">
             <input
@@ -174,7 +181,7 @@ const CustomSizeEditor: React.FC<CustomSizeEditorProps> = ({
               value={widthStr}
               onChange={handleWidthChange}
               onBlur={handleWidthBlur}
-              placeholder="40"
+              placeholder="30"
               className="w-full bg-neutral-950 border border-neutral-700/80 rounded-lg px-2.5 py-1.5 text-xs text-neutral-100 font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40 transition-colors"
             />
             <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-neutral-500 font-mono pointer-events-none">
@@ -185,7 +192,7 @@ const CustomSizeEditor: React.FC<CustomSizeEditorProps> = ({
 
         <div>
           <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
-            Alto (cm)
+            {isMdf ? 'Alto Tabla MDF (cm)' : 'Alto (cm)'}
           </label>
           <div className="relative">
             <input
@@ -194,7 +201,7 @@ const CustomSizeEditor: React.FC<CustomSizeEditorProps> = ({
               value={heightStr}
               onChange={handleHeightChange}
               onBlur={handleHeightBlur}
-              placeholder="50"
+              placeholder="40"
               className="w-full bg-neutral-950 border border-neutral-700/80 rounded-lg px-2.5 py-1.5 text-xs text-neutral-100 font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40 transition-colors"
             />
             <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-neutral-500 font-mono pointer-events-none">
@@ -203,6 +210,16 @@ const CustomSizeEditor: React.FC<CustomSizeEditorProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Indicador de cálculo con sangrado si es MDF */}
+      {isMdf && (
+        <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-between text-[10.5px]">
+          <span className="text-amber-200/90 font-medium">Lámina final con sangrado (+2 cm por lado):</span>
+          <span className="font-mono font-bold text-amber-300">
+            {(currentW + 4).toLocaleString('es-ES', { maximumFractionDigits: 1 })} × {(currentH + 4).toLocaleString('es-ES', { maximumFractionDigits: 1 })} cm
+          </span>
+        </div>
+      )}
 
       {/* Botón de invertir orientación + Ratio */}
       <div className="flex items-center justify-between pt-1">
@@ -221,16 +238,18 @@ const CustomSizeEditor: React.FC<CustomSizeEditorProps> = ({
         </div>
       </div>
 
-      {/* Atajos de marcos populares en cm */}
+      {/* Atajos de medidas populares en cm */}
       <div>
         <div className="text-[9px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
           Medidas frecuentes (cm)
         </div>
         <div className="flex flex-wrap gap-1">
           {[
-            { label: '24.8 × 29.8', w: 24.8, h: 29.8 },
+            { label: '20 × 30', w: 20, h: 30 },
+            { label: '23 × 30', w: 23, h: 30 },
+            { label: '30 × 40', w: 30, h: 40 },
             { label: '29.8 × 39.8', w: 29.8, h: 39.8 },
-            { label: '39.8 × 49.8', w: 39.8, h: 49.8 },
+            { label: '40 × 50', w: 40, h: 50 },
             { label: '49.8 × 69.8', w: 49.8, h: 69.8 },
             { label: '30 × 30', w: 30, h: 30 },
             { label: '50 × 50', w: 50, h: 50 },
@@ -251,10 +270,13 @@ const CustomSizeEditor: React.FC<CustomSizeEditorProps> = ({
                     },
                   }));
                 }}
-                className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${isPresetActive
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
+                className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
+                  isPresetActive
+                    ? isMdf
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 font-bold'
+                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
                     : 'bg-neutral-950/60 text-neutral-400 border-neutral-800 hover:text-neutral-200 hover:border-neutral-700'
-                  }`}
+                }`}
               >
                 {preset.label}
               </button>
@@ -273,7 +295,7 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
   onToggleGuides,
 }) => {
   const [openSections, setOpenSections] = useState<string[]>([]);
-  const activePrintSize = getActivePrintSize(config);
+  const { baseSize, sheetSize, isMdf, bleedCm } = getResolvedPrintDimensions(config);
 
   const handleTemplateChange = (template: TemplateType) => {
     onChange((prev) => ({
@@ -316,16 +338,28 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
+                isMdf
+                  ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+              }`}
+            >
+              {isMdf ? '🪵 MDF' : '🖼️ Marco'} •{' '}
               {config.template === 'album-gallery'
                 ? 'Galería'
                 : config.template === 'album-classic'
                   ? 'Clásico'
-                  : 'Placa'} • {activePrintSize.id === 'custom' ? `${activePrintSize.widthMm / 10} × ${activePrintSize.heightMm / 10} cm` : activePrintSize.name}
+                  : 'Placa'}{' '}
+              •{' '}
+              {baseSize.id === 'custom'
+                ? `${baseSize.widthMm / 10} × ${baseSize.heightMm / 10} cm`
+                : baseSize.name}
             </span>
             <ChevronDown
-              className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${openSections.includes('formato') ? 'rotate-180' : ''
-                }`}
+              className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${
+                openSections.includes('formato') ? 'rotate-180' : ''
+              }`}
             />
           </div>
         </Accordion.ItemTrigger>
@@ -341,10 +375,11 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                 <button
                   type="button"
                   onClick={() => handleTemplateChange('album-gallery')}
-                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${config.template === 'album-gallery'
+                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${
+                    config.template === 'album-gallery'
                       ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30 font-medium'
                       : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                    }`}
+                  }`}
                 >
                   <Disc3 className="w-4 h-4 flex-shrink-0 text-emerald-400" />
                   <div>
@@ -356,10 +391,11 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                 <button
                   type="button"
                   onClick={() => handleTemplateChange('album-classic')}
-                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${config.template === 'album-classic'
+                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${
+                    config.template === 'album-classic'
                       ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30 font-medium'
                       : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                    }`}
+                  }`}
                 >
                   <LayoutTemplate className="w-4 h-4 flex-shrink-0 text-emerald-400" />
                   <div>
@@ -371,10 +407,11 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                 <button
                   type="button"
                   onClick={() => handleTemplateChange('song-player')}
-                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${config.template === 'song-player'
+                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${
+                    config.template === 'song-player'
                       ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30 font-medium'
                       : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                    }`}
+                  }`}
                 >
                   <Music2 className="w-4 h-4 flex-shrink-0 text-emerald-400" />
                   <div>
@@ -385,14 +422,89 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
               </div>
             </div>
 
+            {/* Selector de Tipo de Montaje: Cuadros con Marco vs Retablo MDF */}
+            <div>
+              <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-2">
+                Tipo de Montaje / Acabado Físico
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    onChange((prev) => ({
+                      ...prev,
+                      finishType: 'frame',
+                    }))
+                  }
+                  className={`p-2.5 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
+                    !isMdf
+                      ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30'
+                      : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+                  }`}
+                >
+                  <div className="w-7 h-7 rounded-lg bg-neutral-950 flex items-center justify-center flex-shrink-0 border border-neutral-800 mt-0.5">
+                    <Frame className={`w-4 h-4 ${!isMdf ? 'text-emerald-400' : 'text-neutral-400'}`} />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-neutral-200">Cuadro con Marco</div>
+                    <div className="text-[10px] text-neutral-400 leading-tight mt-0.5">
+                      Medida exacta para enmarcado con vidrio
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    onChange((prev) => ({
+                      ...prev,
+                      finishType: 'mdf',
+                      mdfBleedCm: prev.mdfBleedCm ?? 2,
+                    }))
+                  }
+                  className={`p-2.5 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
+                    isMdf
+                      ? 'border-amber-500 bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/30'
+                      : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+                  }`}
+                >
+                  <div className="w-7 h-7 rounded-lg bg-neutral-950 flex items-center justify-center flex-shrink-0 border border-neutral-800 mt-0.5">
+                    <Box className={`w-4 h-4 ${isMdf ? 'text-amber-400' : 'text-neutral-400'}`} />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-neutral-200 flex items-center gap-1.5">
+                      <span>Retablo MDF</span>
+                      <span className="text-[9px] font-mono font-semibold px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        +2 cm
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-neutral-400 leading-tight mt-0.5">
+                      +2 cm sangrado de fondo para cantos
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Mensaje descriptivo para el modo MDF */}
+            {isMdf && (
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-200/90 text-[11px] leading-relaxed flex items-start gap-2.5 animate-fadeIn">
+                <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-amber-300">Producción en MDF: </span>
+                  La impresión física se amplía <strong>2 cm de fondo por cada lado (+4 cm en total)</strong> para doblar y pegar sobre los cantos de la madera. Tu diseño conserva su tamaño y escala original en el centro sin cortarse.
+                </div>
+              </div>
+            )}
+
             {/* Formato Físico (300 DPI) */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
-                  Formato Físico (300 DPI Reales)
+                  {isMdf ? 'Medida de Tabla MDF (300 DPI)' : 'Formato Físico (300 DPI Reales)'}
                 </label>
                 <span className="text-[10px] text-emerald-400 font-mono font-medium">
-                  {activePrintSize.widthPx300Dpi} × {activePrintSize.heightPx300Dpi} px
+                  {sheetSize.widthPx300Dpi} × {sheetSize.heightPx300Dpi} px
                 </span>
               </div>
 
@@ -401,11 +513,22 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                 {PRESET_PRINT_SIZE_KEYS.map((key) => {
                   const size = PRINT_SIZES[key];
                   const isSelected = config.sizeKey === key;
-                  const usageMap: Record<PresetPrintSizeKey, string> = {
-                    '24.8x29.8': 'Marco 25 × 30 cm estándar',
+
+                  const presetSheetW = isMdf ? size.widthMm + 40 : size.widthMm;
+                  const presetSheetH = isMdf ? size.heightMm + 40 : size.heightMm;
+
+                  const usageMapFrame: Record<PresetPrintSizeKey, string> = {
+                    '23x30': 'Marco 23 × 30 cm (2 por hoja)',
                     '29.8x39.8': 'Marco 30 × 40 cm estándar',
                     '39.8x49.8': 'Marco 40 × 50 cm estándar',
                     '49.8x69.8': 'Marco 50 × 70 cm estándar',
+                  };
+
+                  const usageMapMdf: Record<PresetPrintSizeKey, string> = {
+                    '23x30': 'Tabla MDF 23 × 30 cm • Impresión 27 × 34 cm',
+                    '29.8x39.8': 'Tabla MDF 30 × 40 cm • Impresión 33.8 × 43.8 cm',
+                    '39.8x49.8': 'Tabla MDF 40 × 50 cm • Impresión 43.8 × 53.8 cm',
+                    '49.8x69.8': 'Tabla MDF 50 × 70 cm • Impresión 53.8 × 73.8 cm',
                   };
 
                   return (
@@ -413,20 +536,26 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                       key={key}
                       type="button"
                       onClick={() => handleSizeChange(key)}
-                      className={`p-2 rounded-lg border text-left transition-all flex items-center gap-2.5 ${isSelected
-                          ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30'
+                      className={`p-2 rounded-lg border text-left transition-all flex items-center gap-2.5 ${
+                        isSelected
+                          ? isMdf
+                            ? 'border-amber-500 bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/30'
+                            : 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30'
                           : 'border-neutral-800/80 bg-neutral-900/40 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                        }`}
+                      }`}
                     >
-                      {/* Miniature Paper Silhouette */}
+                      {/* Silueta en miniatura del papel */}
                       <div className="w-6 h-8 flex items-center justify-center flex-shrink-0 bg-neutral-950/80 rounded border border-neutral-800 p-0.5">
                         <div
-                          className={`border transition-colors ${isSelected
-                              ? 'border-emerald-400 bg-emerald-500/30'
+                          className={`border transition-colors ${
+                            isSelected
+                              ? isMdf
+                                ? 'border-amber-400 bg-amber-500/30'
+                                : 'border-emerald-400 bg-emerald-500/30'
                               : 'border-neutral-600 bg-neutral-800/40'
-                            }`}
+                          }`}
                           style={{
-                            aspectRatio: `${size.widthMm} / ${size.heightMm}`,
+                            aspectRatio: `${presetSheetW} / ${presetSheetH}`,
                             height: '100%',
                             maxHeight: '24px',
                           }}
@@ -435,13 +564,17 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-neutral-200">{size.name}</span>
+                          <span className="text-xs font-bold text-neutral-200">
+                            {isMdf ? `Tabla MDF ${size.name}` : size.name}
+                          </span>
                           <span className="text-[9px] font-mono text-neutral-400 font-semibold">
-                            {(size.widthMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} × {(size.heightMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} cm
+                            {isMdf
+                              ? `Lámina: ${(presetSheetW / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} × ${(presetSheetH / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} cm`
+                              : `${(size.widthMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} × ${(size.heightMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} cm`}
                           </span>
                         </div>
                         <div className="text-[10px] text-neutral-500 truncate mt-0.5">
-                          {usageMap[key]} • Ratio {size.aspectRatioRatio.toFixed(2)}
+                          {isMdf ? usageMapMdf[key] : `${usageMapFrame[key]} • Ratio ${size.aspectRatioRatio.toFixed(2)}`}
                         </div>
                       </div>
                     </button>
@@ -459,16 +592,24 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                         customSize: prev.customSize || DEFAULT_CUSTOM_SIZE,
                       }));
                     }}
-                    className={`w-full p-2 rounded-lg border text-left transition-all flex items-center gap-2.5 ${config.sizeKey === 'custom'
-                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30'
+                    className={`w-full p-2 rounded-lg border text-left transition-all flex items-center gap-2.5 ${
+                      config.sizeKey === 'custom'
+                        ? isMdf
+                          ? 'border-amber-500 bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/30'
+                          : 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30'
                         : 'border-neutral-800/80 bg-neutral-900/40 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                      }`}
+                    }`}
                   >
                     {/* Miniature Custom Icon */}
                     <div className="w-6 h-8 flex items-center justify-center flex-shrink-0 bg-neutral-950/80 rounded border border-neutral-800 p-0.5">
                       <Sliders
-                        className={`w-3.5 h-3.5 transition-colors ${config.sizeKey === 'custom' ? 'text-emerald-400' : 'text-neutral-500'
-                          }`}
+                        className={`w-3.5 h-3.5 transition-colors ${
+                          config.sizeKey === 'custom'
+                            ? isMdf
+                              ? 'text-amber-400'
+                              : 'text-emerald-400'
+                            : 'text-neutral-500'
+                        }`}
                       />
                     </div>
 
@@ -477,12 +618,16 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                         <span className="text-xs font-bold text-neutral-200">Personalizado</span>
                         <span className="text-[9px] font-mono text-emerald-400 font-semibold">
                           {config.sizeKey === 'custom'
-                            ? `${(activePrintSize.widthMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} × ${(activePrintSize.heightMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} cm`
+                            ? isMdf
+                              ? `Madera ${(baseSize.widthMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} × ${(baseSize.heightMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} cm`
+                              : `${(baseSize.widthMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} × ${(baseSize.heightMm / 10).toLocaleString('es-ES', { maximumFractionDigits: 1 })} cm`
                             : 'A tu medida'}
                         </span>
                       </div>
                       <div className="text-[10px] text-neutral-500 truncate mt-0.5">
-                        Elige ancho y alto libre en centímetros
+                        {isMdf
+                          ? 'Elige la medida de tu tabla de madera y agregamos 2 cm de fondo'
+                          : 'Elige ancho y alto libre en centímetros'}
                       </div>
                     </div>
                   </button>
@@ -491,7 +636,7 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
                   {config.sizeKey === 'custom' && (
                     <CustomSizeEditor
                       config={config}
-                      activePrintSize={activePrintSize}
+                      activePrintSize={sheetSize}
                       onChange={onChange}
                     />
                   )}
@@ -503,15 +648,18 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
             <div className="flex items-center justify-between pt-2 border-t border-neutral-800/60">
               <span className="text-[11px] text-neutral-400 flex items-center gap-1.5">
                 <Eye className="w-3.5 h-3.5 text-neutral-500" />
-                Guías de corte y sangría (Pre-prensa)
+                {isMdf ? 'Guías de doblado y corte MDF' : 'Guías de corte y sangría (Pre-prensa)'}
               </span>
               <button
                 type="button"
                 onClick={onToggleGuides}
-                className={`text-[11px] px-2.5 py-1 rounded-md border font-medium transition-colors ${showGuides
-                    ? 'bg-neutral-800 text-neutral-200 border-neutral-700'
+                className={`text-[11px] px-2.5 py-1 rounded-md border font-medium transition-colors ${
+                  showGuides
+                    ? isMdf
+                      ? 'bg-amber-500/20 text-amber-200 border-amber-500/40'
+                      : 'bg-neutral-800 text-neutral-200 border-neutral-700'
                     : 'bg-transparent text-neutral-500 border-neutral-800 hover:text-neutral-300'
-                  }`}
+                }`}
               >
                 {showGuides ? 'Ocultar guías' : 'Mostrar guías'}
               </button>

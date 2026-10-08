@@ -753,17 +753,127 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                 />
               </div>
               {((config.template === 'song-player' ? player.palette || album.palette : album.palette) || []).length > 0 && (
-                <div className="flex items-center gap-1.5 pt-0.5">
+                <div className="flex items-center gap-2 pt-1">
                   {(config.template === 'song-player' ? player.palette || album.palette : album.palette)!
                     .slice(0, 5)
-                    .map((hex, idx) => (
-                      <div
-                        key={`${hex}-${idx}`}
-                        className="w-5 h-5 rounded flex-shrink-0 border border-neutral-700 shadow-sm"
-                        style={{ backgroundColor: hex }}
-                        title={hex}
-                      />
-                    ))}
+                    .map((hex, idx) => {
+                      const hasBorder = isAlbum ? album.paletteBorder !== false : player.paletteBorder !== false;
+                      const borderColor = (isAlbum ? album.paletteBorderColor : player.paletteBorderColor) || '#FFFFFF';
+
+                      return (
+                        <div
+                          key={`${hex}-${idx}`}
+                          className="w-5 h-5 rounded-[3px] flex-shrink-0 transition-all"
+                          style={{
+                            backgroundColor: hex,
+                            border: hasBorder ? `1.5px solid ${borderColor}` : 'none',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.4)',
+                          }}
+                          title={hex}
+                        />
+                      );
+                    })}
+                </div>
+              )}
+
+              {/* Control de Borde en Cuadros de Paleta */}
+              {((config.template === 'song-player' ? player.showPalette !== false : album.showPalette !== false)) && (
+                <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-lg p-2.5 space-y-2 mt-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-medium text-neutral-300">
+                        Borde en los Cuadros
+                      </span>
+                      <p className="text-[9.5px] text-neutral-500">
+                        Línea perimetral alrededor de cada muestra
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={
+                        config.template === 'song-player'
+                          ? player.paletteBorder !== false
+                          : album.paletteBorder !== false
+                      }
+                      onChange={(e) => {
+                        if (config.template === 'song-player') {
+                          updatePlayer({ paletteBorder: e.target.checked });
+                        } else {
+                          updateAlbum({ paletteBorder: e.target.checked });
+                        }
+                      }}
+                      className="w-4 h-4 accent-emerald-500 rounded cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Opciones de Color del Borde (Visible solo si el borde está activado) */}
+                  {(config.template === 'song-player' ? player.paletteBorder !== false : album.paletteBorder !== false) && (
+                    <div className="pt-2 border-t border-neutral-800/60 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10.5px] font-medium text-neutral-400">
+                          Color del Borde:
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {/* Botón rápido Blanco (Por defecto) */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (config.template === 'song-player') {
+                                updatePlayer({ paletteBorderColor: '#FFFFFF' });
+                              } else {
+                                updateAlbum({ paletteBorderColor: '#FFFFFF' });
+                              }
+                            }}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors flex items-center gap-1 ${
+                              ((config.template === 'song-player' ? player.paletteBorderColor : album.paletteBorderColor) || '#FFFFFF').toUpperCase() === '#FFFFFF'
+                                ? 'bg-white text-neutral-950 border-white shadow-sm'
+                                : 'bg-neutral-950/60 text-neutral-300 border-neutral-700 hover:border-neutral-500'
+                            }`}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-white border border-neutral-400 inline-block" />
+                            Blanco
+                          </button>
+
+                          {/* Botón rápido Negro */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (config.template === 'song-player') {
+                                updatePlayer({ paletteBorderColor: '#000000' });
+                              } else {
+                                updateAlbum({ paletteBorderColor: '#000000' });
+                              }
+                            }}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors flex items-center gap-1 ${
+                              (config.template === 'song-player' ? player.paletteBorderColor : album.paletteBorderColor) === '#000000'
+                                ? 'bg-neutral-900 text-white border-neutral-400 shadow-sm'
+                                : 'bg-neutral-950/60 text-neutral-300 border-neutral-700 hover:border-neutral-500'
+                            }`}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-black border border-neutral-600 inline-block" />
+                            Negro
+                          </button>
+
+                          {/* ColorPickerPopover para cualquier color personalizado */}
+                          <ColorPickerPopover
+                            title="Color del Borde de la Paleta"
+                            color={
+                              (config.template === 'song-player'
+                                ? player.paletteBorderColor
+                                : album.paletteBorderColor) || '#FFFFFF'
+                            }
+                            onChange={(c) => {
+                              if (config.template === 'song-player') {
+                                updatePlayer({ paletteBorderColor: c });
+                              } else {
+                                updateAlbum({ paletteBorderColor: c });
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -787,7 +897,7 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                         value={
                           config.template === 'song-player'
                             ? (player.paletteSize ?? 14)
-                            : (album.paletteSize ?? 32)
+                            : (album.paletteSize ?? 24)
                         }
                         onChange={(e) => {
                           const val = parseInt(e.target.value, 10);
@@ -817,7 +927,7 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                     value={
                       config.template === 'song-player'
                         ? (player.paletteSize ?? 14)
-                        : (album.paletteSize ?? 32)
+                        : (album.paletteSize ?? 24)
                     }
                     onChange={(e) => {
                       const val = Number(e.target.value);
@@ -842,13 +952,13 @@ export const AlbumControls: React.FC<AlbumControlsProps> = ({ config, onChange }
                       : [
                           { label: 'Compacto', size: 18 },
                           { label: 'Normal', size: 24 },
-                          { label: 'Medio', size: 32 },
-                          { label: 'Grande', size: 42 },
+                          { label: 'Medio', size: 28 },
+                          { label: 'Grande', size: 36 },
                         ]
                     ).map((preset) => {
                       const currentSize = config.template === 'song-player'
                         ? (player.paletteSize ?? 14)
-                        : (album.paletteSize ?? 32);
+                        : (album.paletteSize ?? 24);
                       const isSelected = currentSize === preset.size;
 
                       return (

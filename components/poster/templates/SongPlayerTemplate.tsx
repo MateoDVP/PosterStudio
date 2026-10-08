@@ -274,17 +274,24 @@ export const SongPlayerTemplate: React.FC<SongPlayerTemplateProps> = ({
               : ['#D6C6B6', '#B0A296', '#696058', '#403A36', '#1E1B19']
             )
               .slice(0, 5)
-              .map((hex, i) => (
-                <div
-                  key={`${hex}-${i}`}
-                  className={`border border-black border-opacity-30 flex-1 rounded-[2px] shadow-sm transition-transform hover:scale-[1.02] ${player.paletteSize ? '' : 'h-3 sm:h-3.5'}`}
-                  style={{
-                    backgroundColor: hex,
-                    height: player.paletteSize ? `${player.paletteSize}px` : undefined,
-                  }}
-                  title={hex}
-                />
-              ))}
+              .map((hex, i) => {
+                const hasBorder = player.paletteBorder !== false;
+                const borderColor = player.paletteBorderColor || '#FFFFFF';
+
+                return (
+                  <div
+                    key={`${hex}-${i}`}
+                    className={`flex-1 rounded-[3px] shadow-sm transition-transform hover:scale-[1.02] ${player.paletteSize ? '' : 'h-3 sm:h-3.5'}`}
+                    style={{
+                      backgroundColor: hex,
+                      height: player.paletteSize ? `${player.paletteSize}px` : undefined,
+                      border: hasBorder ? `1.5px solid ${borderColor}` : '1px solid rgba(0,0,0,0.2)',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                    }}
+                    title={hex}
+                  />
+                );
+              })}
           </div>
         )}
       </div>

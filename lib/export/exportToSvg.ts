@@ -11,6 +11,7 @@
  */
 
 import { PosterConfig, PrintSize } from '@/types/poster';
+import { getResolvedPrintDimensions } from '@/lib/constants/printSizes';
 import { formatReleaseDate, calculateTotalDurationFromTracks } from '@/lib/spotify';
 
 export type ExportProgressCallback = (status: string) => void;
@@ -191,10 +192,13 @@ export async function generatePosterSvgString(
   printSize: PrintSize,
   onProgress?: ExportProgressCallback
 ): Promise<string> {
-  const width = printSize.widthMm;
-  const height = printSize.heightMm;
-  const isUltraSquarer = printSize.aspectRatioRatio >= 0.81;
-  const isSquarer = printSize.aspectRatioRatio >= 0.74;
+  const { baseSize, sheetSize, isMdf, bleedMm } = getResolvedPrintDimensions(config);
+  const totalSheetW = sheetSize.widthMm;
+  const totalSheetH = sheetSize.heightMm;
+  const width = baseSize.widthMm;
+  const height = baseSize.heightMm;
+  const isUltraSquarer = baseSize.aspectRatioRatio >= 0.81;
+  const isSquarer = baseSize.aspectRatioRatio >= 0.74;
 
   const bgColor = config.backgroundColor || '#FFFFFF';
   const textColor = config.textColor || '#000000';
@@ -206,14 +210,14 @@ export async function generatePosterSvgString(
       : config.player.coverUrl;
   const coverBase64 = activeCoverUrl ? await convertImageToBase64(activeCoverUrl) : '';
 
-  // Generar atmósfera de fondo difuminada si está activa
+  // Generar atmósfera de fondo difuminada si está activa (cubriendo toda la lámina con sangrado)
   let blurredBgBase64 = '';
   if (config.enableBlurredBackground && activeCoverUrl) {
     onProgress?.('Generando atmósfera de portada difuminada...');
     blurredBgBase64 = await createBlurredBackgroundDataUrl(
       activeCoverUrl,
-      width,
-      height,
+      totalSheetW,
+      totalSheetH,
       config.blurredBackgroundBlur,
       config.blurredBackgroundOpacity,
       config.blurredBackgroundOverlay,
@@ -252,9 +256,9 @@ export async function generatePosterSvgString(
     const bgLayer = `
     <!-- CAPA 1: FONDO DE PAPEL Y ATMÓSFERA DIFUMINADA -->
     <g id="Capa_Fondo">
-      <rect width="${width}" height="${height}" fill="${bgColor}" />
+      <rect width="${totalSheetW}" height="${totalSheetH}" fill="${bgColor}" />
       ${blurredBgBase64
-        ? `<image id="Fondo_Portada_Difuminado" href="${blurredBgBase64}" xlink:href="${blurredBgBase64}" x="0" y="0" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice" />`
+        ? `<image id="Fondo_Portada_Difuminado" href="${blurredBgBase64}" xlink:href="${blurredBgBase64}" x="0" y="0" width="${totalSheetW}" height="${totalSheetH}" preserveAspectRatio="xMidYMid slice" />`
         : ''
       }
     </g>`;
@@ -273,20 +277,25 @@ export async function generatePosterSvgString(
     let paletteLayer = '';
     const rightBlockStartY = lowerY + 2.0 * baseScale;
     const hasPalette = album.showPalette !== false && album.palette && album.palette.length > 0;
-    const paletteMultiplier = (album.paletteSize ?? 32) / 22;
-    const sqSize = (isSquarer ? 9.5 : 11.5) * baseScale * paletteMultiplier;
-    const sqGap = (isSquarer ? 2.5 : 3.0) * baseScale * Math.min(1.2, paletteMultiplier);
+    const paletteMultiplier = (album.paletteSize ?? 24) / 24;
+    const sqSize = (isSquarer ? 8.0 : 9.5) * baseScale * paletteMultiplier;
+    const sqGap = (isSquarer ? 2.0 : 2.5) * baseScale * Math.min(1.2, paletteMultiplier);
 
     if (hasPalette && album.palette) {
       const palette = album.palette.slice(0, 5);
       const totalPaletteW = palette.length * sqSize + (palette.length - 1) * sqGap;
       const startX = rightColX - totalPaletteW;
       const startY = rightBlockStartY;
+      const hasBorder = album.paletteBorder !== false;
+      const borderColor = album.paletteBorderColor || '#FFFFFF';
+      const borderWidth = (0.45 * baseScale).toFixed(2);
+      const borderRadius = (0.8 * baseScale).toFixed(2);
+      const strokeAttr = hasBorder ? ` stroke="${borderColor}" stroke-width="${borderWidth}"` : '';
 
       const swatchesXml = palette
         .map((hex, i) => {
           const x = startX + i * (sqSize + sqGap);
-          return `<rect id="Muestra_Color_${i + 1}" x="${x.toFixed(2)}" y="${startY.toFixed(2)}" width="${sqSize.toFixed(2)}" height="${sqSize.toFixed(2)}" fill="${hex}" stroke="rgba(0,0,0,0.15)" stroke-width="${(0.3 * baseScale).toFixed(2)}" />`;
+          return `<rect id="Muestra_Color_${i + 1}" x="${x.toFixed(2)}" y="${startY.toFixed(2)}" width="${sqSize.toFixed(2)}" height="${sqSize.toFixed(2)}" rx="${borderRadius}" fill="${hex}" style="filter: drop-shadow(0px ${(0.5 * baseScale).toFixed(2)}px ${(0.8 * baseScale).toFixed(2)}px rgba(0,0,0,0.4));"${strokeAttr} />`;
         })
         .join('\n      ');
 
@@ -463,7 +472,10 @@ export async function generatePosterSvgString(
       }
     </g>`;
 
-    layersXml = `${bgLayer}\n${coverLayer}\n${paletteLayer}\n${albumInfoLayer}\n${tracklistLayer}\n${spotifyLayer}`;
+    const galleryContent = `${coverLayer}\n${paletteLayer}\n${albumInfoLayer}\n${tracklistLayer}\n${spotifyLayer}`;
+    layersXml = isMdf
+      ? `${bgLayer}\n    <!-- CONTENIDO CENTRADO PARA TABLA MDF -->\n    <g id="Contenido_Diseno_MDF" transform="translate(${bleedMm.toFixed(2)}, ${bleedMm.toFixed(2)})">\n${galleryContent}\n    </g>`
+      : `${bgLayer}\n${galleryContent}`;
   } else if (config.template === 'album-classic') {
     const album = config.album;
     const tracks = album.tracks || [];
@@ -489,9 +501,9 @@ export async function generatePosterSvgString(
     const bgLayer = `
     <!-- CAPA 1: FONDO DE PAPEL Y ATMÓSFERA DIFUMINADA -->
     <g id="Capa_Fondo">
-      <rect width="${width}" height="${height}" fill="${bgColor}" />
+      <rect width="${totalSheetW}" height="${totalSheetH}" fill="${bgColor}" />
       ${blurredBgBase64
-        ? `<image id="Fondo_Portada_Difuminado" href="${blurredBgBase64}" xlink:href="${blurredBgBase64}" x="0" y="0" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice" />`
+        ? `<image id="Fondo_Portada_Difuminado" href="${blurredBgBase64}" xlink:href="${blurredBgBase64}" x="0" y="0" width="${totalSheetW}" height="${totalSheetH}" preserveAspectRatio="xMidYMid slice" />`
         : ''
       }
     </g>`;
@@ -523,10 +535,10 @@ export async function generatePosterSvgString(
     // Paleta de colores a la derecha en la fila superior (anclada al margen derecho completo)
     const hasPalette = album.showPalette !== false && album.palette && album.palette.length > 0;
     const pColors = hasPalette ? album.palette!.slice(0, 5) : [];
-    const paletteMultiplier = (album.paletteSize ?? 32) / 24;
-    const boxW = (isSquarer ? 8.0 : 9.5) * baseScale * paletteMultiplier;
-    const boxH = (isSquarer ? 3.8 : 4.5) * baseScale * paletteMultiplier;
-    const totalPaletteW = pColors.length * boxW;
+    const paletteMultiplier = (album.paletteSize ?? 24) / 24;
+    const boxSize = (isSquarer ? 6.5 : 7.8) * baseScale * paletteMultiplier;
+    const boxGap = (isSquarer ? 1.6 : 2.0) * baseScale;
+    const totalPaletteW = pColors.length * boxSize + (pColors.length - 1) * boxGap;
     const startPaletteX = padX + contentW - totalPaletteW;
 
     const isLongTitle = rawTitle.length > 22;
@@ -553,15 +565,21 @@ export async function generatePosterSvgString(
 
     const titleTotalH = (titleLines.length - 1) * titleLineHeight + titleFontSize;
 
-    // Paleta en la fila superior (alineada verticalmente con la línea del título)
+    // Paleta en la fila superior (cuadros separados, redondeados, con sombra y borde configurable)
     let paletteSvg = '';
     if (hasPalette) {
-      const paletteY = titleTop + (titleFontSize - boxH) / 2;
+      const paletteY = titleTop + (titleFontSize - boxSize) / 2;
+      const hasBorder = album.paletteBorder !== false;
+      const borderColor = album.paletteBorderColor || '#FFFFFF';
+      const borderWidth = (0.45 * baseScale).toFixed(2);
+      const borderRadius = (0.8 * baseScale).toFixed(2);
+      const strokeAttr = hasBorder ? ` stroke="${borderColor}" stroke-width="${borderWidth}"` : '';
+
       paletteSvg = `
       <g id="Paleta_Colores">
         ${pColors.map((hex, i) => {
-        const bx = startPaletteX + i * boxW;
-        return `<rect x="${bx.toFixed(2)}" y="${paletteY.toFixed(2)}" width="${boxW.toFixed(2)}" height="${boxH.toFixed(2)}" fill="${hex}" />`;
+        const bx = startPaletteX + i * (boxSize + boxGap);
+        return `<rect x="${bx.toFixed(2)}" y="${paletteY.toFixed(2)}" width="${boxSize.toFixed(2)}" height="${boxSize.toFixed(2)}" rx="${borderRadius}" fill="${hex}" style="filter: drop-shadow(0px ${(0.5 * baseScale).toFixed(2)}px ${(0.8 * baseScale).toFixed(2)}px rgba(0,0,0,0.4));"${strokeAttr} />`;
       }).join('')}
       </g>`;
     }
@@ -753,7 +771,10 @@ export async function generatePosterSvgString(
       </g>
     </g>`;
 
-    layersXml = `${bgLayer}\n${coverLayer}\n${headerLayer}\n${dividerLayer}\n${tracklistLayer}\n${metadataLayer}\n${spotifyLayer}`;
+    const classicContent = `${coverLayer}\n${headerLayer}\n${dividerLayer}\n${tracklistLayer}\n${metadataLayer}\n${spotifyLayer}`;
+    layersXml = isMdf
+      ? `${bgLayer}\n    <!-- CONTENIDO CENTRADO PARA TABLA MDF -->\n    <g id="Contenido_Diseno_MDF" transform="translate(${bleedMm.toFixed(2)}, ${bleedMm.toFixed(2)})">\n${classicContent}\n    </g>`
+      : `${bgLayer}\n${classicContent}`;
   } else {
     // --- PLANTILLA SONG PLAYER ---
     const player = config.player;
@@ -773,9 +794,9 @@ export async function generatePosterSvgString(
 
     const bgLayer = `
     <g id="Capa_Fondo">
-      <rect width="${width}" height="${height}" fill="${bgColor}" />
+      <rect width="${totalSheetW}" height="${totalSheetH}" fill="${bgColor}" />
       ${blurredBgBase64
-        ? `<image id="Fondo_Portada_Difuminado" href="${blurredBgBase64}" xlink:href="${blurredBgBase64}" x="0" y="0" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice" />`
+        ? `<image id="Fondo_Portada_Difuminado" href="${blurredBgBase64}" xlink:href="${blurredBgBase64}" x="0" y="0" width="${totalSheetW}" height="${totalSheetH}" preserveAspectRatio="xMidYMid slice" />`
         : ''
       }
     </g>`;
@@ -923,16 +944,19 @@ export async function generatePosterSvgString(
     </g>`;
     }
 
-    layersXml = `${bgLayer}\n${coverLayer}\n${textLayer}\n${spotifyLayer}\n${progressLayer}\n${controlsLayer}${paletteLayer}`;
+    const playerContent = `${coverLayer}\n${textLayer}\n${spotifyLayer}\n${progressLayer}\n${controlsLayer}${paletteLayer}`;
+    layersXml = isMdf
+      ? `${bgLayer}\n    <!-- CONTENIDO CENTRADO PARA TABLA MDF -->\n    <g id="Contenido_Diseno_MDF" transform="translate(${bleedMm.toFixed(2)}, ${bleedMm.toFixed(2)})">\n${playerContent}\n    </g>`
+      : `${bgLayer}\n${playerContent}`;
   }
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
   xmlns="http://www.w3.org/2000/svg"
   xmlns:xlink="http://www.w3.org/1999/xlink"
-  viewBox="0 0 ${width} ${height}"
-  width="${width}mm"
-  height="${height}mm"
+  viewBox="0 0 ${totalSheetW} ${totalSheetH}"
+  width="${totalSheetW}mm"
+  height="${totalSheetH}mm"
   version="1.1"
 >
   ${layersXml}

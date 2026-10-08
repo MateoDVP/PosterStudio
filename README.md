@@ -65,11 +65,10 @@ Conecta en tiempo real la **API Oficial de Spotify** para metadatos y la **API d
 
 | Formato | Medida Física (mm) | Medida Digital 300 DPI (px) | Ratio Aspecto | Uso Habitual |
 | :--- | :--- | :--- | :--- | :--- |
-| **A5** | 148 × 210 mm | 1748 × 2480 px | 1:1.41 (ISO) | Portarretratos y placas acrílicas |
-| **A4** | 210 × 297 mm | 2480 × 3508 px | 1:1.41 (ISO) | Escritorio y cuadros estándar |
-| **A3** *(Default)* | 297 × 420 mm | 3508 × 4960 px | 1:1.41 (ISO) | Póster mediano de pared |
-| **30 × 40 cm** | 300 × 400 mm | 3543 × 4724 px | 3:4 (Cuadro) | Marcos estándar para fotografía / IKEA |
-| **50 × 70 cm** | 500 × 700 mm | 5906 × 8268 px | 5:7 (Galería) | Póster grande de galería / museo (~49 MP) |
+| **23 × 30 cm** | 230 × 300 mm | 2717 × 3543 px | 23:30 | Marco 23 × 30 cm (2 impresiones por hoja) |
+| **29.8 × 39.8 cm** *(Default)* | 298 × 398 mm | 3520 × 4701 px | ~3:4 | Marco 30 × 40 cm estándar |
+| **39.8 × 49.8 cm** | 398 × 498 mm | 4701 × 5882 px | ~4:5 | Marco 40 × 50 cm estándar |
+| **49.8 × 69.8 cm** | 498 × 698 mm | 5882 × 8244 px | ~5:7 | Marco 50 × 70 cm estándar |
 
 ---
 

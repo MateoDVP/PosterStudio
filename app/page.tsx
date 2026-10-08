@@ -24,6 +24,8 @@ import {
 
 const INITIAL_POSTER_CONFIG: PosterConfig = {
   template: 'album-gallery',
+  finishType: 'frame',
+  mdfBleedCm: 2,
   sizeKey: DEFAULT_PRINT_SIZE,
   customSize: DEFAULT_CUSTOM_SIZE,
   backgroundColor: '#FFFFFF',
@@ -48,7 +50,9 @@ const INITIAL_POSTER_CONFIG: PosterConfig = {
     palette: DEFAULT_PALETTE,
     showPalette: true,
     metadataFontSize: 12,
-    paletteSize: 32,
+    paletteSize: 24,
+    paletteBorder: true,
+    paletteBorderColor: '#FFFFFF',
     spotifyCodeSize: 30,
   },
   player: {
@@ -66,6 +70,8 @@ const INITIAL_POSTER_CONFIG: PosterConfig = {
     soundwaveColor: '#000000',
     palette: DEFAULT_PALETTE,
     showPalette: true,
+    paletteBorder: true,
+    paletteBorderColor: '#FFFFFF',
   },
 };
 

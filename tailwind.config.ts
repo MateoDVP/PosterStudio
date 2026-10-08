@@ -17,6 +17,8 @@ const config: Config = {
         display: ["var(--font-poppins)", "Poppins", "sans-serif"],
       },
       aspectRatio: {
+        "23/30": "23 / 30",
+        "230/300": "230 / 300",
         "248/298": "248 / 298",
         "298/398": "298 / 398",
         "398/498": "398 / 498",
